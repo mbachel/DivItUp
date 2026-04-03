@@ -12,7 +12,7 @@ export default function TopBar() {
 
       {/* Desktop title */}
       <div className="hidden md:block">
-        <h2 className="text-sm font-bold uppercase tracking-widest text-outline">
+        <h2 className="text-xl font-bold uppercase tracking-widest text-outline">
           Household Dashboard
         </h2>
       </div>
@@ -41,7 +41,7 @@ export default function TopBar() {
           {/* Avatar */}
           <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary/20">
             <Image
-              src="https://lh3.googleusercontent.com/aida-public/AB6AXuCBhxPrn_UtQQTfPAdbpZkElKlJg8xTr9GWIPC1r_IG11HFsIbpfRo-eSZ9dSVKKF18YP35qwrV4IHx0GMaFnHV-MIsVkwNVl4rDig9lEii3_MN18jowQKHle3L_Zyt0cfZgiEs1rH5RTziUiViEeWpeXHpxQK_R-Z-gYtI6210EZiuAVILSvnCUaArcBAzNd__c3gCzi2e5aMRJMLf-iriNFvb4vV82wKou_zQjGolyz3Zg9-cXm0B6j8tifg__RQsmcrXK-_VPg"
+              src="/Mogistan.jpg"
               alt="User profile"
               width={40}
               height={40}
