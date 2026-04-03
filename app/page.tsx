@@ -32,8 +32,6 @@ export default function DashboardPage() {
           <LockedAlert
             message="Locked: Complete your tasks!"
             description="You cannot add expenses until you complete the recycling chore today."
-            actionLabel="Go to Chores"
-            onAction={() => console.log("Navigate to chores")}
           />
 
           {/* Bento Grid */}

@@ -16,7 +16,7 @@ export default function SideNav() {
   return (
     <aside className="hidden md:flex flex-col h-full w-64 fixed left-0 top-0 py-8 gap-4 bg-[#f6fafb] z-50">
       <div className="px-6 mb-8">
-        <h1 className="text-xl font-extrabold text-[#00606e] font-headline">
+        <h1 className="text-2xl font-extrabold text-[#00606e] font-headline">
           Divvy
         </h1>
         <p className="text-xs font-medium text-outline">The Roommate Management System</p>

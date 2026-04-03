@@ -1,5 +1,4 @@
 // Mock data for the Divvy dashboard
-// Replace these with real API calls as your backend grows
 
 export const balanceEntries = [
   {
