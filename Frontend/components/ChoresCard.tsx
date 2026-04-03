@@ -19,7 +19,7 @@ export default function ChoresCard({ chores, onCompleteTask }: ChoresCardProps) 
     <div className="md:col-span-5 lg:col-span-4 bg-primary-container text-on-primary-container rounded-xl p-8 ambient-depth flex flex-col">
       <div className="flex justify-between items-center mb-8">
         <h3 className="text-xl font-bold font-headline">Who&apos;s next?</h3>
-        <span className="material-symbols-outlined text-black/50">
+        <span className="material-symbols-outlined text-white/50">
           assignment_ind
         </span>
       </div>
