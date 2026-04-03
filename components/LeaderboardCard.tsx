@@ -29,7 +29,7 @@ export default function LeaderboardCard({
       <div className="flex flex-col md:flex-row md:items-end justify-between mb-8 gap-4">
         <div>
           <h3 className="text-2xl font-bold text-on-surface font-headline">
-            The Hearth Standings
+            The Divvy Standings
           </h3>
           <p className="text-outline font-medium">
             Weekly contributions and bonus points
