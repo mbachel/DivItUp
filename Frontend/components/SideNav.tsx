@@ -45,7 +45,7 @@ export default function SideNav() {
       </nav>
 
       <div className="px-4 mt-auto">
-        <button className="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-black rounded-full font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95 transition-all">
+        <button className="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95 transition-all">
           <span className="material-symbols-outlined text-lg">add</span>
           Quick Add Expense
         </button>
