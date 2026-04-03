@@ -19,7 +19,7 @@ export default function TopBar() {
 
       {/* Right side actions */}
       <div className="flex items-center gap-4">
-        {/* Hearth Points */}
+        {/* Divvy Points */}
         <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-full">
           <span
             className="material-symbols-outlined text-[#007B8C] fill-icon"

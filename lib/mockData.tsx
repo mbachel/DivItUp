@@ -1,4 +1,4 @@
-// Mock data for the Hearth & Habit dashboard
+// Mock data for the Divvy dashboard
 // Replace these with real API calls as your backend grows
 
 export const balanceEntries = [

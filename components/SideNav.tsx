@@ -17,9 +17,9 @@ export default function SideNav() {
     <aside className="hidden md:flex flex-col h-full w-64 fixed left-0 top-0 py-8 gap-4 bg-[#f6fafb] z-50">
       <div className="px-6 mb-8">
         <h1 className="text-xl font-extrabold text-[#00606e] font-headline">
-          Hearth &amp; Habit
+          Divvy
         </h1>
-        <p className="text-xs font-medium text-outline">The Living Canvas</p>
+        <p className="text-xs font-medium text-outline">The Roommate Management System</p>
       </div>
 
       <nav className="flex flex-col gap-2 flex-grow">
@@ -45,7 +45,7 @@ export default function SideNav() {
       </nav>
 
       <div className="px-4 mt-auto">
-        <button className="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-white rounded-full font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95 transition-all">
+        <button className="w-full py-4 bg-gradient-to-r from-primary to-primary-container text-black rounded-full font-bold text-sm flex items-center justify-center gap-2 shadow-lg shadow-primary/10 active:scale-95 transition-all">
           <span className="material-symbols-outlined text-lg">add</span>
           Quick Add Expense
         </button>
