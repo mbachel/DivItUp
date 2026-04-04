@@ -1,4 +1,4 @@
-// Mock data for the Divvy dashboard
+// Mock data for the DivItUp dashboard
 
 export const balanceEntries = [
   {
