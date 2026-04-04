@@ -31,7 +31,7 @@ export default function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
     setName("");
     setAmount("");
   };
-
+  {/*Adding comments for clarity*/}
   return (
     <div className="bg-white rounded-2xl p-6 border border-outline-variant/40 h-full">
       <h3 className="font-bold text-lg text-on-surface mb-1 font-headline">Manual Entry</h3>

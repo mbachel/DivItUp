@@ -37,7 +37,7 @@ export default function ReceiptUploader({ onScan }: ReceiptUploaderProps) {
     setScanned(true);
     onScan?.(MOCK_RECEIPT.items, MOCK_RECEIPT.total, MOCK_RECEIPT.store);
   };
-
+  {/*Adding comments for clarity*/}
   return (
     <div
       className={`relative rounded-2xl border-2 border-dashed p-6 transition-all ${

@@ -57,7 +57,7 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
         activeFilter === "Subscriptions" ? e.categoryType === "subscription" :
         activeFilter === "Utilities"     ? e.categoryType === "household" : true
       );
-
+      {/*Adding comments for clarity*/}
   return (
     <div>
       {/* Header + filters */}

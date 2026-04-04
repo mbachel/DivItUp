@@ -1,5 +1,5 @@
 import Image from "next/image";
-
+{/*Adding comments for clarity*/}
 export default function TopBar() {
   return (
     <header className="flex justify-between items-center px-6 py-4 w-full bg-[#f6fafb] sticky top-0 z-40">
