@@ -14,7 +14,7 @@ import {
   leaderboardMembers,
   recentActivities,
 } from "@/lib/mockData";
-
+{/* Adding comments for more clarity */}
 export default function DashboardPage() {
   return (
     <div className="bg-surface text-on-surface min-h-screen">

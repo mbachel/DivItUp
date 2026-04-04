@@ -13,7 +13,7 @@ interface ChoresCardProps {
   chores: ChoreEntry[];
   onCompleteTask?: () => void;
 }
-
+{/*Adding comments for clarity*/}
 export default function ChoresCard({ chores, onCompleteTask }: ChoresCardProps) {
   return (
     <div className="md:col-span-5 lg:col-span-4 bg-primary-container text-on-primary-container rounded-xl p-8 ambient-depth flex flex-col">

@@ -6,7 +6,7 @@ interface BalanceEntry {
   avatar: string;
   description: string;
   amount: number;
-  isOwed: boolean; // true = they owe you, false = you owe them
+  isOwed: boolean;
 }
 
 interface FinancialOverviewProps {
