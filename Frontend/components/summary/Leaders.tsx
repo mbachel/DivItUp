@@ -8,18 +8,18 @@ export interface Leader {
   isCurrentUser?: boolean;
 }
 
-interface DivvyLeadersProps {
+interface DivItUpLeadersProps {
   leaders: Leader[];
   onViewHistory?: () => void;
 }
 {/* Adding Comments for Clarity */}
-export default function DivvyLeaders({ leaders, onViewHistory }: DivvyLeadersProps) {
+export default function DivItUpLeaders({ leaders, onViewHistory }: DivItUpLeadersProps) {
   return (
     <div className="flex-1 min-w-0">
       {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-extrabold text-on-surface font-headline">
-          Divvy Leaders
+          DivItUp Leaders
         </h2>
         <button
           onClick={onViewHistory}
