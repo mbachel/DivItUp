@@ -2,7 +2,7 @@ import type { Metadata } from "next";
 import "./globals.css";
 
 export const metadata: Metadata = {
-  title: "Divvy - Household Management Dashboard",
+  title: "DivItUp - Household Management Dashboard",
   description: "Household management dashboard for roommates",
 };
 

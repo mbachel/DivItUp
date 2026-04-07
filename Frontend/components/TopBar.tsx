@@ -1,5 +1,5 @@
 import Image from "next/image";
-
+{/*Adding comments for clarity*/}
 export default function TopBar() {
   return (
     <header className="flex justify-between items-center px-6 py-4 w-full bg-[#f6fafb] sticky top-0 z-40">
@@ -19,7 +19,7 @@ export default function TopBar() {
 
       {/* Right side actions */}
       <div className="flex items-center gap-4">
-        {/* Divvy Points */}
+        {/* DivItUp Points */}
         <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-full">
           <span
             className="material-symbols-outlined text-[#007B8C] fill-icon"
