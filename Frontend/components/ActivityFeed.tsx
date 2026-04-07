@@ -19,7 +19,7 @@ interface ActivityFeedProps {
   activities: ActivityItem[];
   onViewAll?: () => void;
 }
-
+{/*Adding comments for clarity*/}
 export default function ActivityFeed({
   activities,
   onViewAll,

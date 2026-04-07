@@ -12,7 +12,7 @@ const navItems = [
 
 export default function BottomNav() {
   const pathname = usePathname();
-
+  {/*Adding comments for clarity*/}
   return (
     <>
       {/* Mobile FAB */}
