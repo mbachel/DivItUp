@@ -2,8 +2,7 @@ from sqlalchemy import Column, Integer, String
 from sqlalchemy.orm import relationship
 from ..dependencies.database import Base
 
-
-class User(Base):
+class Users(Base):
   __tablename__ = "users"
 
   id = Column(Integer, primary_key=True, index=True, autoincrement=True)
