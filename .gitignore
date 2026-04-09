@@ -1,0 +1,60 @@
+# frontend dependencies
+/Frontend/node_modules
+/Frontend/.pnp
+/Frontend/.pnp.*
+/Frontend/.yarn/*
+!/Frontend/.yarn/patches
+!/Frontend/.yarn/plugins
+!/Frontend/.yarn/releases
+!/Frontend/.yarn/versions
+
+# frontend testing
+/Frontend/coverage
+
+# frontend next.js
+/Frontend/.next/
+/Frontend/out/
+
+# frontend production
+/Frontend/build
+
+# frontend misc
+/Frontend/.DS_Store
+/Frontend/*.pem
+
+# frontend debug
+/Frontend/npm-debug.log*
+/Frontend/yarn-debug.log*
+/Frontend/yarn-error.log*
+/Frontend/.pnpm-debug.log*
+
+# root env files
+/.env
+
+# frontend vercel
+/Frontend/.vercel
+
+# frontend typescript
+/Frontend/*.tsbuildinfo
+/Frontend/next-env.d.ts
+
+# backend env and virtual environments
+/Backend/.venv/
+/Backend/venv/
+/Backend/env/
+
+# backend python cache and bytecode
+/Backend/**/__pycache__/
+/Backend/**/*.py[cod]
+
+# backend tooling caches and reports
+/Backend/.pytest_cache/
+/Backend/.mypy_cache/
+/Backend/.ruff_cache/
+/Backend/.coverage
+/Backend/htmlcov/
+
+# backend local databases and logs
+/Backend/*.db
+/Backend/*.sqlite3
+/Backend/*.log
