@@ -1,0 +1,65 @@
+from sqlalchemy.orm import Session
+from fastapi import HTTPException, status, Response
+from ..models import expenses as model
+from sqlalchemy.exc import SQLAlchemyError
+
+def create(db: Session, request):
+    new_expense = model.Expense(
+        group_id=request.group_id,
+        paid_by=request.paid_by,
+        receipt_id=request.receipt_id,
+        title=request.title,
+        total_amount=request.total_amount,
+        split_type=request.split_type
+    )
+    try:
+        db.add(new_expense)
+        db.commit()
+        db.refresh(new_expense)
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return new_expense
+
+def read_all(db: Session):
+    try:
+        result = db.query(model.Expense).all()
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return result
+
+def read_one(db: Session, item_id):
+    try:
+        item = db.query(model.Expense).filter(model.Expense.id == item_id).first()
+        if not item:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found!")
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return item
+
+def update(db: Session, item_id, request):
+    try:
+        item = db.query(model.Expense).filter(model.Expense.id == item_id)
+        if not item.first():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found!")
+        update_data = request.dict(exclude_unset=True)
+        item.update(update_data, synchronize_session=False)
+        db.commit()
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return item.first()
+
+def delete(db: Session, item_id):
+    try:
+        item = db.query(model.Expense).filter(model.Expense.id == item_id)
+        if not item.first():
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found!")
+        item.delete(synchronize_session=False)
+        db.commit()
+    except SQLAlchemyError as e:
+        error = str(e.__dict__['orig'])
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
+    return Response(status_code=status.HTTP_204_NO_CONTENT)
