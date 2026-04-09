@@ -1,0 +1,16 @@
+from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy.orm import relationship
+from ..dependencies.database import Base
+
+class Groups(Base):
+  __tablename__ = "groups"
+
+  id = Column(Integer, primary_key=True, index=True, autoincrement=True)
+  name = Column(String(100), nullable=False)
+  invite_code = Column(String(20),  unique=True, nullable=False, index=True)
+  created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+
+  members = relationship("GroupMember", back_populates="group")
+  chores = relationship("Chore", back_populates="group")
+  expenses = relationship("Expense", back_populates="group")
+  receipts = relationship("Receipt", back_populates="group")
