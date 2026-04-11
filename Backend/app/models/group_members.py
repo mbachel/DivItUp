@@ -18,5 +18,5 @@ class GroupMembers(Base):
   role = Column(Enum(GroupRole), default=GroupRole.member, nullable=False)
   is_restricted = Column(Boolean, default=False)
 
-  group = relationship("Group", back_populates="members")
-  user = relationship("User",  back_populates="memberships")
+  group = relationship("Groups", back_populates="members")
+  user  = relationship("Users",  back_populates="memberships")

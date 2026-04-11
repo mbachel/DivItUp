@@ -20,7 +20,7 @@ class Expenses(Base):
   total_amount = Column(DECIMAL(10, 2), nullable=False)
   split_type = Column(Enum(SplitType), nullable=False)
 
-  group = relationship("Group", back_populates="expenses")
-  paid_by_user = relationship("User", back_populates="expenses_paid")
-  receipt = relationship("Receipt", back_populates="expense")
-  splits = relationship("ExpenseSplit", back_populates="expense")
+  group        = relationship("Groups",       back_populates="expenses")
+  paid_by_user = relationship("Users",        back_populates="expenses_paid")
+  receipt      = relationship("Receipts",     back_populates="expense")
+  splits       = relationship("ExpenseSplits", back_populates="expense")

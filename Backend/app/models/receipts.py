@@ -20,6 +20,6 @@ class Receipts(Base):
   total_extracted = Column(DECIMAL(10, 2), nullable=True)
   status = Column(Enum(ReceiptStatus), default=ReceiptStatus.pending)
 
-  group = relationship("Group", back_populates="receipts")
-  items = relationship("ReceiptItem", back_populates="receipt")
-  expense = relationship("Expense", back_populates="receipt", uselist=False)
+  group   = relationship("Groups",       back_populates="receipts")
+  items   = relationship("ReceiptItems", back_populates="receipt")
+  expense = relationship("Expenses",     back_populates="receipt", uselist=False)
