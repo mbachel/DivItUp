@@ -28,7 +28,7 @@ const SPLIT_BADGE: Record<string, { bg: string; text: string }> = {
   "Evenly":           { bg: "bg-teal-50",   text: "text-teal-700" },
 };
 
-const FILTERS = ["All Items", "Groceries", "Household", "Subscriptions", "Utilities"];
+const FILTERS = ["All Items", "Groceries", "Household", "Subscriptions", "Utilities", "Other"];
 
 const CATEGORY_OPTIONS: { label: string; value: Expense["categoryType"] }[] = [
   { label: "Grocery",      value: "grocery" },
@@ -78,7 +78,8 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
         activeFilter === "Groceries"     ? e.categoryType === "grocery" :
         activeFilter === "Household"     ? e.categoryType === "household" :
         activeFilter === "Subscriptions" ? e.categoryType === "subscription" :
-        activeFilter === "Utilities"     ? e.categoryType === "household" : true
+        activeFilter === "Utilities"     ? e.categoryType === "household" :
+        activeFilter === "Other"         ? e.categoryType === "other" : true
       );
 
   const handleSave = (updated: Expense) => {
