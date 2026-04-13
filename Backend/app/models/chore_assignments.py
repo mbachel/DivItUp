@@ -21,5 +21,5 @@ class ChoreAssignments(Base):
   status = Column(Enum(ChoreStatus), default=ChoreStatus.pending, nullable=False)
   completed_at = Column(DateTime, nullable=True)
 
-  chore = relationship("Chore", back_populates="assignments")
-  assigned_user = relationship("User",  back_populates="chore_assignments")
+  chore         = relationship("Chores", back_populates="assignments")
+  assigned_user = relationship("Users",  back_populates="chore_assignments")

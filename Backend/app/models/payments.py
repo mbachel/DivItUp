@@ -13,6 +13,6 @@ class Payments(Base):
   amount = Column(DECIMAL(10, 2), nullable=False)
   paid_at = Column(DateTime, nullable=False)
 
-  payer = relationship("User", foreign_keys=[payer_id], back_populates="payments_made")
-  payee = relationship("User", foreign_keys=[payee_id], back_populates="payments_received")
-  expense_split = relationship("ExpenseSplit", back_populates="payments")
+  payer         = relationship("Users",        foreign_keys=[payer_id], back_populates="payments_made")
+  payee         = relationship("Users",        foreign_keys=[payee_id], back_populates="payments_received")
+  expense_split = relationship("ExpenseSplits", back_populates="payments")

@@ -13,6 +13,6 @@ class ExpenseSplits(Base):
   amount_owed = Column(DECIMAL(10, 2), nullable=False)
   is_settled = Column(Boolean, default=False)
 
-  expense = relationship("Expense", back_populates="splits")
-  user = relationship("User", back_populates="expense_splits")
-  payments = relationship("Payment", back_populates="expense_split")
+  expense  = relationship("Expenses",  back_populates="splits")
+  user     = relationship("Users",     back_populates="expense_splits")
+  payments = relationship("Payments",  back_populates="expense_split")

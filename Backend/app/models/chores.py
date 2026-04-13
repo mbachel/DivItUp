@@ -19,5 +19,5 @@ class Chores(Base):
   title = Column(String(150), nullable=False)
   frequency = Column(Enum(ChoreFrequency), nullable=False)
 
-  group = relationship("Group", back_populates="chores")
-  assignments = relationship("ChoreAssignment", back_populates="chore")
+  group       = relationship("Groups",           back_populates="chores")
+  assignments = relationship("ChoreAssignments", back_populates="chore")

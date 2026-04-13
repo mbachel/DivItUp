@@ -10,7 +10,7 @@ class Groups(Base):
   invite_code = Column(String(20),  unique=True, nullable=False, index=True)
   created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
 
-  members = relationship("GroupMember", back_populates="group")
-  chores = relationship("Chore", back_populates="group")
-  expenses = relationship("Expense", back_populates="group")
-  receipts = relationship("Receipt", back_populates="group")
+  members  = relationship("GroupMembers", back_populates="group")
+  chores   = relationship("Chores",       back_populates="group")
+  expenses = relationship("Expenses",     back_populates="group")
+  receipts = relationship("Receipts",     back_populates="group")

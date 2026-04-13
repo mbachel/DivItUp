@@ -12,4 +12,4 @@ class ReceiptItems(Base):
   quantity = Column(Integer, default=1)
   unit_price = Column(DECIMAL(10, 2), nullable=False)
 
-  receipt = relationship("Receipt", back_populates="items")
+  receipt = relationship("Receipts", back_populates="items")
