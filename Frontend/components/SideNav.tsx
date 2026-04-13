@@ -43,6 +43,17 @@ export default function SideNav() {
           );
         })}
       </nav>
+
+      {/* Login button */}
+      <div className="px-4 mt-auto pb-2">
+        <Link
+          href="/login"
+          className="w-full py-3 border border-outline-variant text-outline rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-surface-container hover:text-on-surface transition-all"
+        >
+          <span className="material-symbols-outlined text-base">login</span>
+          Log In
+        </Link>
+      </div>
     </aside>
   );
 }
