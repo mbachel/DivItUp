@@ -1,4 +1,4 @@
-from fastapi import APIRouter
+from fastapi import FastAPI
 from . import (
     users,
     groups,
@@ -12,15 +12,14 @@ from . import (
     payments
 )
 
-router = APIRouter()
-
-router.include_router(users.router)
-router.include_router(groups.router)
-router.include_router(group_members.router)
-router.include_router(chores.router)
-router.include_router(chore_assignments.router)
-router.include_router(expenses.router)
-router.include_router(expense_splits.router)
-router.include_router(receipts.router)
-router.include_router(receipt_items.router)
-router.include_router(payments.router)
+def load_routes(app: FastAPI):
+    app.include_router(users.router)
+    app.include_router(groups.router)
+    app.include_router(group_members.router)
+    app.include_router(chores.router)
+    app.include_router(chore_assignments.router)
+    app.include_router(expenses.router)
+    app.include_router(expense_splits.router)
+    app.include_router(receipts.router)
+    app.include_router(receipt_items.router)
+    app.include_router(payments.router)
