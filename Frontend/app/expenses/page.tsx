@@ -1,12 +1,29 @@
 "use client";
 
-import SideNav from "@/components/SideNav";
-import BottomNav from "@/components/BottomNav";
+import SideNav from "../../components/SideNav";
+import BottomNav from "../../components/BottomNav";
 import ReceiptUploader from "../../components/expenses/ReceiptUploader";
 import ManualEntryForm from "../../components/expenses/ManualEntryForm";
 import ExpenseTable from "../../components/expenses/ExpenseTable";
 import { useState } from "react";
 import type { Expense } from "../../components/expenses/ExpenseTable";
+import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
+
+function mapCategory(category: string): Expense["categoryType"] {
+  const map: Record<string, Expense["categoryType"]> = {
+    food:          "grocery",
+    groceries:     "grocery",
+    restaurant:    "grocery",
+    telecom:       "internet",
+    software:      "subscription",
+    energy:        "household",
+    accommodation: "household",
+    transport:     "other",
+    gasoline:      "other",
+    miscellaneous: "other",
+  };
+  return map[category.toLowerCase()] ?? "other";
+}
 
 export default function ExpensesPage() {
   const [newExpenses, setNewExpenses] = useState<Expense[]>([]);
@@ -23,9 +40,26 @@ export default function ExpensesPage() {
       store: expense.name,
       category: expense.category.toUpperCase(),
       categoryType: expense.category.toLowerCase() as Expense["categoryType"],
-      date: new Date().toLocaleDateString("en-US", { month: "short", day: "numeric", year: "numeric" }),
+      date: new Date().toLocaleDateString("en-US", {
+        month: "short", day: "numeric", year: "numeric"
+      }),
       amount: expense.amount,
       splitMethod: expense.splitMethod,
+    };
+    setNewExpenses((prev) => [newEntry, ...prev]);
+  };
+
+  const handleScan = (receipt: ScannedReceipt) => {
+    const newEntry: Expense = {
+      id: Date.now().toString(),
+      store: receipt.storeName,
+      category: (receipt.subcategory ?? receipt.category).toUpperCase(),
+      categoryType: mapCategory(receipt.category),
+      date: receipt.date ?? new Date().toLocaleDateString("en-US", {
+        month: "short", day: "numeric", year: "numeric"
+      }),
+      amount: receipt.totalAmount,
+      splitMethod: "Evenly",
     };
     setNewExpenses((prev) => [newEntry, ...prev]);
   };
@@ -91,7 +125,7 @@ export default function ExpensesPage() {
 
           {/* Two-column upload + manual entry */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
-            <ReceiptUploader />
+            <ReceiptUploader onScan={handleScan} />
             <ManualEntryForm onAdd={handleManualAdd} />
           </div>
 
