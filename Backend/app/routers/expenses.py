@@ -9,11 +9,11 @@ router = APIRouter(
     prefix="/expenses"
 )
 
-@router.post("/", response_model=schema.Expense)
+@router.post("", response_model=schema.Expense)
 def create(request: schema.ExpenseCreate, db: Session = Depends(get_db)):
     return controller.create(db=db, request=request)
 
-@router.get("/", response_model=list[schema.Expense])
+@router.get("", response_model=list[schema.Expense])
 def read_all(group_id: int = None, db: Session = Depends(get_db)):
     if group_id:
         return controller.read_all_by_group(db, group_id)

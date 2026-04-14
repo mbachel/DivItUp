@@ -9,11 +9,11 @@ router = APIRouter(
     prefix="/chore-assignments"
 )
 
-@router.post("/", response_model=schema.ChoreAssignment)
+@router.post("", response_model=schema.ChoreAssignment)
 def create(request: schema.ChoreAssignmentCreate, db: Session = Depends(get_db)):
     return controller.create(db=db, request=request)
 
-@router.get("/", response_model=list[schema.ChoreAssignment])
+@router.get("", response_model=list[schema.ChoreAssignment])
 def read_all(db: Session = Depends(get_db)):
     return controller.read_all(db)
 
