@@ -4,7 +4,7 @@ from ..models import expenses as model
 from sqlalchemy.exc import SQLAlchemyError
 
 def create(db: Session, request):
-    new_expense = model.Expense(
+    new_expense = model.Expenses(
         group_id=request.group_id,
         paid_by=request.paid_by,
         receipt_id=request.receipt_id,
@@ -23,7 +23,7 @@ def create(db: Session, request):
 
 def read_all(db: Session):
     try:
-        result = db.query(model.Expense).all()
+        result = db.query(model.Expenses).all()
     except SQLAlchemyError as e:
         error = str(e.__dict__['orig'])
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
@@ -31,7 +31,7 @@ def read_all(db: Session):
 
 def read_one(db: Session, item_id):
     try:
-        item = db.query(model.Expense).filter(model.Expense.id == item_id).first()
+        item = db.query(model.Expenses).filter(model.Expenses.id == item_id).first()
         if not item:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found!")
     except SQLAlchemyError as e:
@@ -41,7 +41,7 @@ def read_one(db: Session, item_id):
 
 def update(db: Session, item_id, request):
     try:
-        item = db.query(model.Expense).filter(model.Expense.id == item_id)
+        item = db.query(model.Expenses).filter(model.Expenses.id == item_id)
         if not item.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found!")
         update_data = request.dict(exclude_unset=True)
@@ -54,7 +54,7 @@ def update(db: Session, item_id, request):
 
 def delete(db: Session, item_id):
     try:
-        item = db.query(model.Expense).filter(model.Expense.id == item_id)
+        item = db.query(model.Expenses).filter(model.Expenses.id == item_id)
         if not item.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense not found!")
         item.delete(synchronize_session=False)

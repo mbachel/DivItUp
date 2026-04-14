@@ -4,7 +4,7 @@ from ..models import expense_splits as model
 from sqlalchemy.exc import SQLAlchemyError
 
 def create(db: Session, request):
-    new_split = model.ExpenseSplit(
+    new_split = model.ExpenseSplits(
         expense_id=request.expense_id,
         user_id=request.user_id,
         amount_owed=request.amount_owed,
@@ -21,7 +21,7 @@ def create(db: Session, request):
 
 def read_all(db: Session):
     try:
-        result = db.query(model.ExpenseSplit).all()
+        result = db.query(model.ExpenseSplits).all()
     except SQLAlchemyError as e:
         error = str(e.__dict__['orig'])
         raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=error)
@@ -29,7 +29,7 @@ def read_all(db: Session):
 
 def read_one(db: Session, item_id):
     try:
-        item = db.query(model.ExpenseSplit).filter(model.ExpenseSplit.id == item_id).first()
+        item = db.query(model.ExpenseSplits).filter(model.ExpenseSplits.id == item_id).first()
         if not item:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense split not found!")
     except SQLAlchemyError as e:
@@ -39,7 +39,7 @@ def read_one(db: Session, item_id):
 
 def update(db: Session, item_id, request):
     try:
-        item = db.query(model.ExpenseSplit).filter(model.ExpenseSplit.id == item_id)
+        item = db.query(model.ExpenseSplits).filter(model.ExpenseSplits.id == item_id)
         if not item.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense split not found!")
         update_data = request.dict(exclude_unset=True)
@@ -52,7 +52,7 @@ def update(db: Session, item_id, request):
 
 def delete(db: Session, item_id):
     try:
-        item = db.query(model.ExpenseSplit).filter(model.ExpenseSplit.id == item_id)
+        item = db.query(model.ExpenseSplits).filter(model.ExpenseSplits.id == item_id)
         if not item.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Expense split not found!")
         item.delete(synchronize_session=False)
