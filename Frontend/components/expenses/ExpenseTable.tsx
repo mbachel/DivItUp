@@ -1,15 +1,20 @@
 "use client";
 
-import { useState, useEffect, useRef } from "react";
+import { useState } from "react";
+import * as api from "../../lib/apiClient";
 
-export interface Expense {
-  id: string;
-  store: string;
-  category: string;
-  categoryType: "grocery" | "internet" | "subscription" | "household" | "rent" | "other";
-  date: string;
-  amount: number;
-  splitMethod: string;
+/**
+ * Backend expense format for display purposes.
+ * Maps backend fields to UI representation.
+ */
+export interface BackendExpense {
+  id: number;
+  group_id: number;
+  paid_by: number;
+  receipt_id: number | null;
+  title: string;
+  total_amount: number;
+  split_type: string;
 }
 
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; icon: string }> = {
@@ -21,78 +26,58 @@ const CATEGORY_STYLES: Record<string, { bg: string; text: string; icon: string }
   other:        { bg: "bg-gray-100",   text: "text-gray-700",   icon: "receipt" },
 };
 
-const SPLIT_BADGE: Record<string, { bg: string; text: string }> = {
-  "Evenly Split (4)": { bg: "bg-teal-50",   text: "text-teal-700" },
-  "By Percentage":    { bg: "bg-purple-50", text: "text-purple-700" },
-  "Specific Items":   { bg: "bg-amber-50",  text: "text-amber-700" },
-  "Evenly":           { bg: "bg-teal-50",   text: "text-teal-700" },
+const SPLIT_DISPLAY: Record<string, { bg: string; text: string; label: string }> = {
+  equal:   { bg: "bg-teal-50",   text: "text-teal-700",   label: "Evenly Split" },
+  custom:  { bg: "bg-purple-50", text: "text-purple-700", label: "Custom Split" },
 };
 
-const FILTERS = ["All Items", "Groceries", "Household", "Subscriptions", "Utilities", "Other"];
+const FILTERS = ["All Items", "Recent", "By Split Type"];
 
-const CATEGORY_OPTIONS: { label: string; value: Expense["categoryType"] }[] = [
-  { label: "Grocery",      value: "grocery" },
-  { label: "Internet",     value: "internet" },
-  { label: "Subscription", value: "subscription" },
-  { label: "Household",    value: "household" },
-  { label: "Rent",         value: "rent" },
-  { label: "Other",        value: "other" },
-];
-
-const SPLIT_OPTIONS = ["Evenly", "Evenly Split (4)", "By Percentage", "Specific Items"];
-
-const MOCK_EXPENSES: Expense[] = [
-  { id: "1", store: "Whole Foods - Groceries", category: "GROCERY",      categoryType: "grocery",      date: "Oct 24, 2023", amount: 54.20,  splitMethod: "Evenly Split (4)" },
-  { id: "2", store: "Comcast Internet",        category: "INTERNET",     categoryType: "internet",     date: "Oct 20, 2023", amount: 89.99,  splitMethod: "By Percentage" },
-  { id: "3", store: "Netflix Premium",         category: "SUBSCRIPTION", categoryType: "subscription", date: "Oct 18, 2023", amount: 19.99,  splitMethod: "Specific Items" },
-  { id: "4", store: "Trader Joe's",            category: "GROCERY",      categoryType: "grocery",      date: "Oct 15, 2023", amount: 38.45,  splitMethod: "Evenly Split (4)" },
-  { id: "5", store: "Pacific Gas & Electric",  category: "UTILITIES",    categoryType: "household",    date: "Oct 12, 2023", amount: 112.00, splitMethod: "By Percentage" },
-];
-
-interface ExpenseTableProps {
-  additionalExpenses?: Expense[];
+/**
+ * Infer category type from expense title for display.
+ * This is a heuristic; ideally the backend would provide category.
+ */
+function inferCategoryType(title: string): "grocery" | "internet" | "subscription" | "household" | "rent" | "other" {
+  const lower = title.toLowerCase();
+  if (lower.includes("grocery") || lower.includes("whole foods") || lower.includes("trader")) return "grocery";
+  if (lower.includes("internet") || lower.includes("comcast")) return "internet";
+  if (lower.includes("netflix") || lower.includes("subscription")) return "subscription";
+  if (lower.includes("gas") || lower.includes("electric") || lower.includes("utilities")) return "household";
+  if (lower.includes("rent")) return "rent";
+  return "other";
 }
 
-export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTableProps) {
+interface ExpenseTableProps {
+  expenses: BackendExpense[];
+}
+
+export default function ExpenseTable({ expenses = [] }: ExpenseTableProps) {
   const [activeFilter, setActiveFilter] = useState("All Items");
-  const [expenses, setExpenses] = useState<Expense[]>(MOCK_EXPENSES);
-  const [extraExpenses, setExtraExpenses] = useState<Expense[]>([]);
-  const [editingExpense, setEditingExpense] = useState<Expense | null>(null);
-  const prevAdditionalRef = useRef<Expense[]>([]);
-
-  useEffect(() => {
-    const newOnes = additionalExpenses.filter(
-      (a) => !prevAdditionalRef.current.find((p) => p.id === a.id)
-    );
-    if (newOnes.length > 0) {
-      setExtraExpenses((prev) => [...newOnes, ...prev]);
-      prevAdditionalRef.current = additionalExpenses;
-    }
-  }, [additionalExpenses]);
-
-  const allExpenses = [...extraExpenses, ...expenses];
+  const [editingExpense, setEditingExpense] = useState<BackendExpense | null>(null);
 
   const filtered = activeFilter === "All Items"
-    ? allExpenses
-    : allExpenses.filter((e) =>
-        activeFilter === "Groceries"     ? e.categoryType === "grocery" :
-        activeFilter === "Household"     ? e.categoryType === "household" :
-        activeFilter === "Subscriptions" ? e.categoryType === "subscription" :
-        activeFilter === "Utilities"     ? e.categoryType === "household" :
-        activeFilter === "Other"         ? e.categoryType === "other" : true
-      );
+    ? expenses
+    : activeFilter === "Recent"
+      ? [...expenses].sort((a, b) => b.id - a.id)
+      : expenses; // "By Split Type" would group by split_type
 
-  const handleSave = (updated: Expense) => {
-    const catLabel = CATEGORY_OPTIONS.find(c => c.value === updated.categoryType)?.label.toUpperCase() ?? updated.category;
-    const withLabel = { ...updated, category: catLabel };
-
-    const inMock = expenses.find((e) => e.id === updated.id);
-    if (inMock) {
-      setExpenses((prev) => prev.map((e) => e.id === updated.id ? withLabel : e));
-    } else {
-      setExtraExpenses((prev) => prev.map((e) => e.id === updated.id ? withLabel : e));
+  const handleSave = async (updated: BackendExpense) => {
+    const success = await api.updateExpense(updated.id, {
+      title: updated.title,
+      total_amount: updated.total_amount,
+      split_type: updated.split_type,
+    });
+    if (success) {
+      setEditingExpense(null);
+      // Ideally refresh the list here or update local state
     }
-    setEditingExpense(null);
+  };
+
+  const handleDelete = async (id: number) => {
+    if (window.confirm("Delete this expense?")) {
+      await api.deleteExpense(id);
+      // Ideally refresh the list or remove from local state
+    }
   };
 
   return (
@@ -100,7 +85,7 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
       {/* Header + filters */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-bold text-on-surface font-headline">
-          Detected Scanned Items
+          Expenses
         </h2>
         <div className="flex gap-2 flex-wrap">
           {FILTERS.map((f) => (
@@ -122,7 +107,7 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
       {/* Table */}
       <div className="bg-white rounded-2xl border border-outline-variant/40 overflow-hidden">
         <div className="grid grid-cols-[2fr_1fr_1fr_1.5fr_auto] px-6 py-3 border-b border-outline-variant/30">
-          {["Item & Category", "Date", "Price", "Split Method", "Action"].map((h) => (
+          {["Description", "Amount", "Split Type", "ID", "Action"].map((h) => (
             <span key={h} className="text-[10px] font-bold uppercase tracking-widest text-outline">
               {h}
             </span>
@@ -133,12 +118,13 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
           <div className="text-center py-12 text-outline text-sm">No expenses yet</div>
         ) : (
           filtered.map((expense, i) => {
-            const style = CATEGORY_STYLES[expense.categoryType] ?? CATEGORY_STYLES.other;
-            const splitStyle = SPLIT_BADGE[expense.splitMethod] ?? { bg: "bg-gray-50", text: "text-gray-700" };
+            const categoryType = inferCategoryType(expense.title);
+            const style = CATEGORY_STYLES[categoryType] ?? CATEGORY_STYLES.other;
+            const splitStyle = SPLIT_DISPLAY[expense.split_type] ?? SPLIT_DISPLAY.equal;
             return (
               <div
                 key={expense.id}
-                className={`grid grid-cols-[2fr_1fr_1fr_1.5fr_auto] px-6 py-4 items-center hover:bg-surface-container-low transition-colors ${
+                className={`grid grid-cols-[2fr_1fr_1.5fr_1fr_auto] px-6 py-4 items-center hover:bg-surface-container-low transition-colors ${
                   i !== filtered.length - 1 ? "border-b border-outline-variant/20" : ""
                 }`}
               >
@@ -149,19 +135,20 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
                     </span>
                   </div>
                   <div>
-                    <p className="font-bold text-sm text-on-surface">{expense.store}</p>
-                    <p className={`text-[10px] font-bold tracking-wider ${style.text}`}>
-                      {expense.category}
+                    <p className="font-bold text-sm text-on-surface">{expense.title}</p>
+                    <p className="text-[10px] text-outline">
+                      by user #{expense.paid_by}
+                      {expense.receipt_id && ` (receipt #{expense.receipt_id})`}
                     </p>
                   </div>
                 </div>
-                <span className="text-sm text-outline">{expense.date}</span>
                 <span className="text-base font-extrabold text-on-surface">
-                  ${expense.amount.toFixed(2)}
+                  ${expense.total_amount.toFixed(2)}
                 </span>
                 <span className={`inline-flex text-xs font-bold px-3 py-1.5 rounded-full w-fit ${splitStyle.bg} ${splitStyle.text}`}>
-                  {expense.splitMethod}
+                  {splitStyle.label}
                 </span>
+                <span className="text-xs text-outline">#{expense.id}</span>
                 <button
                   onClick={() => setEditingExpense({ ...expense })}
                   className="p-2 hover:bg-surface-container rounded-full transition-colors"
@@ -191,72 +178,39 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
             <div className="space-y-4">
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
-                  Item Name
+                  Description
                 </label>
                 <input
                   type="text"
-                  value={editingExpense.store}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, store: e.target.value })}
+                  value={editingExpense.title}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, title: e.target.value })}
                   className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 />
               </div>
 
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
-                  Category
+                  Amount
                 </label>
-                <select
-                  value={editingExpense.categoryType}
-                  onChange={(e) => setEditingExpense({
-                    ...editingExpense,
-                    categoryType: e.target.value as Expense["categoryType"],
-                  })}
+                <input
+                  type="number"
+                  value={editingExpense.total_amount}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, total_amount: parseFloat(e.target.value) || 0 })}
                   className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                >
-                  {CATEGORY_OPTIONS.map((c) => (
-                    <option key={c.value} value={c.value}>{c.label}</option>
-                  ))}
-                </select>
-              </div>
-
-              <div className="grid grid-cols-2 gap-3">
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
-                    Date
-                  </label>
-                  <input
-                    type="text"
-                    value={editingExpense.date}
-                    onChange={(e) => setEditingExpense({ ...editingExpense, date: e.target.value })}
-                    placeholder="e.g. Oct 24, 2023"
-                    className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                  />
-                </div>
-                <div>
-                  <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
-                    Price
-                  </label>
-                  <input
-                    type="number"
-                    value={editingExpense.amount}
-                    onChange={(e) => setEditingExpense({ ...editingExpense, amount: parseFloat(e.target.value) || 0 })}
-                    className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                  />
-                </div>
+                />
               </div>
 
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
-                  Split Method
+                  Split Type
                 </label>
                 <select
-                  value={editingExpense.splitMethod}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, splitMethod: e.target.value })}
+                  value={editingExpense.split_type}
+                  onChange={(e) => setEditingExpense({ ...editingExpense, split_type: e.target.value })}
                   className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
                 >
-                  {SPLIT_OPTIONS.map((s) => (
-                    <option key={s} value={s}>{s}</option>
-                  ))}
+                  <option value="equal">Equal Split</option>
+                  <option value="custom">Custom Split</option>
                 </select>
               </div>
             </div>
@@ -273,6 +227,12 @@ export default function ExpenseTable({ additionalExpenses = [] }: ExpenseTablePr
                 className="flex-1 py-3 rounded-full bg-primary text-white text-sm font-bold hover:bg-primary-container transition-all active:scale-95"
               >
                 Save Changes
+              </button>
+              <button
+                onClick={() => handleDelete(editingExpense.id)}
+                className="flex-1 py-3 rounded-full bg-red-100 text-red-700 text-sm font-bold hover:bg-red-200 transition-all active:scale-95"
+              >
+                Delete
               </button>
             </div>
           </div>

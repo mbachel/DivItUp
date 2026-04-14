@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useRef, useCallback } from "react";
+import * as api from "../../lib/apiClient";
 
 export interface ScannedReceipt {
   storeName: string;
@@ -19,12 +20,14 @@ export interface ScannedReceipt {
 }
 
 interface ReceiptUploaderProps {
-  onScan?: (receipt: ScannedReceipt) => void;
+  onScan?: (receipt: ScannedReceipt, receiptId: number) => void;
+  groupId: number;
+  userId: number;
 }
 
 type Mode = "idle" | "webcam" | "scanning" | "done" | "error";
 
-export default function ReceiptUploader({ onScan }: ReceiptUploaderProps) {
+export default function ReceiptUploader({ onScan, groupId, userId }: ReceiptUploaderProps) {
   const [mode, setMode] = useState<Mode>("idle");
   const [isDragging, setIsDragging] = useState(false);
   const [receipt, setReceipt] = useState<ScannedReceipt | null>(null);
@@ -47,14 +50,40 @@ export default function ReceiptUploader({ onScan }: ReceiptUploaderProps) {
         throw new Error(error ?? "Scan failed");
       }
       const data: ScannedReceipt = await res.json();
+
+      // ============ Create receipt record in backend ============
+      const receiptPayload: api.ReceiptCreatePayload = {
+        group_id: groupId,
+        uploaded_by: userId,
+        image_url: "", // TODO: upload image file and get URL
+        total_extracted: data.totalAmount,
+        status: "processed",
+      };
+
+      const backendReceipt = await api.createReceipt(receiptPayload);
+      if (!backendReceipt) {
+        throw new Error("Failed to create receipt record");
+      }
+
+      // ============ Create receipt items in backend ============
+      for (const lineItem of data.lineItems) {
+        const itemPayload: api.ReceiptItemCreatePayload = {
+          receipt_id: backendReceipt.id,
+          item_name: lineItem.description,
+          quantity: lineItem.quantity,
+          unit_price: lineItem.unitPrice,
+        };
+        await api.createReceiptItem(itemPayload);
+      }
+
       setReceipt(data);
       setMode("done");
-      onScan?.(data);
+      onScan?.(data, backendReceipt.id);
     } catch (err: unknown) {
       setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
       setMode("error");
     }
-  }, [onScan]);
+  }, [onScan, groupId, userId]);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/") && file.type !== "application/pdf") {

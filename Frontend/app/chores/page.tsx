@@ -8,32 +8,107 @@ import StreakCard from "../../components/chores/StreakCard";
 import ChoreColumn from "../../components/chores/ChoreColumn";
 import EpicTaskCard from "../../components/chores/EpicTaskCard";
 import GroupGoalCard from "../../components/chores/GroupGoalCard";
+import { useState, useEffect } from "react";
+import * as api from "../../lib/apiClient";
 import type { Chore } from "../../components/chores/ChoreCard";
 
-const DAILY_CHORES: Chore[] = [
-  { id: "d1", title: "Wash Dinner Dishes",   points: 50,  dueLabel: "Due Today", assignee: "Me",   status: "pending" },
-  { id: "d2", title: "Water Indoor Plants",  points: 30,  dueLabel: "Due Today", assignee: "Me",   status: "pending" },
-];
+// TODO: Replace with actual auth context/hook
+const CURRENT_GROUP_ID = 1;
 
-const WEEKLY_CHORES: Chore[] = [
-  { id: "w1", title: "Vacuum Living Room",   points: 200, dueLabel: "2 Days Left", daysLeft: 2, assignee: "Me",   status: "pending" },
-  { id: "w2", title: "Clean Glass Windows",  points: 150, dueLabel: "4 Days Left", daysLeft: 4, assignee: "Emma", status: "inprogress" },
-];
+/**
+ * Convert backend ChoreBackend to UI Chore type.
+ * Backend provides: id, group_id, title, frequency
+ * UI needs: id, title, points, dueLabel, assignee, status, (optional: daysLeft)
+ */
+function mapBackendChoreToUI(backendChore: api.ChoreBackend): Chore {
+  // Map frequency to reasonable points
+  const pointsMap: Record<string, number> = {
+    daily: 50,
+    weekly: 150,
+    monthly: 300,
+    one_time: 100,
+  };
 
-const MONTHLY_CHORES: Chore[] = [
-  { id: "m1", title: "Replace Air Filters",  points: 100, dueLabel: "12 Days Left", daysLeft: 12, assignee: "Me", status: "pending" },
-];
+  return {
+    id: String(backendChore.id),
+    title: backendChore.title,
+    points: pointsMap[backendChore.frequency] || 100,
+    dueLabel:
+      backendChore.frequency === "daily"
+        ? "Due Today"
+        : backendChore.frequency === "weekly"
+          ? "Due This Week"
+          : "Due This Month",
+    assignee: "Unassigned", // TODO: get assignee from ChoreAssignment
+    status: "pending", // TODO: get status from ChoreAssignment
+    daysLeft: 1, // TODO: calculate from due date
+  };
+}
 
 export default function ChoresPage() {
+  const [allChores, setAllChores] = useState<Chore[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState("");
+
+  // ============ Load chores on mount ============
+  useEffect(() => {
+    const loadChores = async () => {
+      setLoading(true);
+      setError("");
+      try {
+        const data = await api.fetchChores(CURRENT_GROUP_ID);
+        const mapped = data.map(mapBackendChoreToUI);
+        setAllChores(mapped);
+      } catch (err) {
+        setError("Failed to load chores. Please try again.");
+        console.error(err);
+      } finally {
+        setLoading(false);
+      }
+    };
+    loadChores();
+  }, []);
+
+  // ============ Group chores by frequency ============
+  const dailyChores = allChores.filter(
+    (c) => c.dueLabel === "Due Today"
+  );
+  const weeklyChores = allChores.filter(
+    (c) => c.dueLabel === "Due This Week"
+  );
+  const monthlyChores = allChores.filter(
+    (c) => c.dueLabel === "Due This Month"
+  );
+
+  if (loading) {
+    return (
+      <div className="bg-surface text-on-surface min-h-screen">
+        <SideNav />
+        <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
+          <TopBar />
+          <div className="p-6 md:p-8 text-center text-outline">
+            Loading chores...
+          </div>
+        </main>
+        <BottomNav />
+      </div>
+    );
+  }
+
   return (
     <div className="bg-surface text-on-surface min-h-screen">
       <SideNav />
-         {/* Adding Comments for Clarity */}
       <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
-        {/* Top bar */}
         <TopBar />
 
         <div className="p-6 md:p-8 space-y-8">
+
+          {/* Error message */}
+          {error && (
+            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+              {error}
+            </div>
+          )}
 
           {/* Rotation alert + streak row */}
           <div className="flex gap-5 items-stretch">
@@ -52,22 +127,22 @@ export default function ChoresPage() {
             {/* Daily column */}
             <ChoreColumn
               title="Daily"
-              taskCount={DAILY_CHORES.length}
-              chores={DAILY_CHORES}
+              taskCount={dailyChores.length}
+              chores={dailyChores}
             />
 
             {/* Weekly column */}
             <ChoreColumn
               title="Weekly"
-              taskCount={WEEKLY_CHORES.length}
-              chores={WEEKLY_CHORES}
+              taskCount={weeklyChores.length}
+              chores={weeklyChores}
             />
 
             {/* Monthly column */}
             <ChoreColumn
               title="Monthly"
-              taskCount={MONTHLY_CHORES.length}
-              chores={MONTHLY_CHORES}
+              taskCount={monthlyChores.length}
+              chores={monthlyChores}
             />
 
             {/* Right sidebar */}

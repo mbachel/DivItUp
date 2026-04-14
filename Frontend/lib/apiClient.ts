@@ -1,0 +1,222 @@
+/**
+ * Frontend API client for communicating with the backend.
+ * Backend runs on http://localhost:8000 (or configured via env var)
+ */
+
+const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
+
+// ============ Types (align with backend schemas) ============
+
+export interface ExpenseBackend {
+  id: number;
+  group_id: number;
+  paid_by: number;
+  receipt_id: number | null;
+  title: string;
+  total_amount: number;
+  split_type: string; // "equal" | "custom"
+}
+
+export interface ExpenseCreatePayload {
+  group_id: number;
+  paid_by: number;
+  receipt_id?: number | null;
+  title: string;
+  total_amount: number;
+  split_type: string;
+}
+
+export interface ChoreBackend {
+  id: number;
+  group_id: number;
+  title: string;
+  frequency: string; // "daily" | "weekly" | "monthly" | "one_time"
+}
+
+export interface ChoreCreatePayload {
+  group_id: number;
+  title: string;
+  frequency: string;
+}
+
+export interface ReceiptBackend {
+  id: number;
+  group_id: number;
+  uploaded_by: number;
+  image_url: string;
+  total_extracted: number | null;
+  status: string; // "pending" | "processed" | "error"
+}
+
+export interface ReceiptCreatePayload {
+  group_id: number;
+  uploaded_by: number;
+  image_url: string;
+  total_extracted?: number | null;
+  status: string;
+}
+
+export interface ReceiptItemBackend {
+  id: number;
+  receipt_id: number;
+  item_name: string;
+  quantity: number;
+  unit_price: number;
+}
+
+export interface ReceiptItemCreatePayload {
+  receipt_id: number;
+  item_name: string;
+  quantity: number;
+  unit_price: number;
+}
+
+// ============ Expenses API ============
+
+export async function fetchExpenses(groupId: number): Promise<ExpenseBackend[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/expenses`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error(`Fetch expenses failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching expenses:", err);
+    return [];
+  }
+}
+
+export async function createExpense(payload: ExpenseCreatePayload): Promise<ExpenseBackend | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/expenses`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Create expense failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating expense:", err);
+    return null;
+  }
+}
+
+export async function updateExpense(id: number, payload: Partial<ExpenseCreatePayload>): Promise<ExpenseBackend | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Update expense failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error updating expense:", err);
+    return null;
+  }
+}
+
+export async function deleteExpense(id: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error(`Delete expense failed: ${res.statusText}`);
+    return true;
+  } catch (err) {
+    console.error("Error deleting expense:", err);
+    return false;
+  }
+}
+
+// ============ Chores API ============
+
+export async function fetchChores(groupId: number): Promise<ChoreBackend[]> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/chores`, {
+      method: "GET",
+      headers: { "Content-Type": "application/json" },
+    });
+    if (!res.ok) throw new Error(`Fetch chores failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error fetching chores:", err);
+    return [];
+  }
+}
+
+export async function createChore(payload: ChoreCreatePayload): Promise<ChoreBackend | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/chores`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Create chore failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating chore:", err);
+    return null;
+  }
+}
+
+export async function updateChore(id: number, payload: Partial<ChoreCreatePayload>): Promise<ChoreBackend | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/chores/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Update chore failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error updating chore:", err);
+    return null;
+  }
+}
+
+export async function deleteChore(id: number): Promise<boolean> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/chores/${id}`, {
+      method: "DELETE",
+    });
+    if (!res.ok) throw new Error(`Delete chore failed: ${res.statusText}`);
+    return true;
+  } catch (err) {
+    console.error("Error deleting chore:", err);
+    return false;
+  }
+}
+
+// ============ Receipts & Receipt Items API ============
+
+export async function createReceipt(payload: ReceiptCreatePayload): Promise<ReceiptBackend | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/receipts`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Create receipt failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating receipt:", err);
+    return null;
+  }
+}
+
+export async function createReceiptItem(payload: ReceiptItemCreatePayload): Promise<ReceiptItemBackend | null> {
+  try {
+    const res = await fetch(`${API_BASE_URL}/receipt-items`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+    if (!res.ok) throw new Error(`Create receipt item failed: ${res.statusText}`);
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating receipt item:", err);
+    return null;
+  }
+}
