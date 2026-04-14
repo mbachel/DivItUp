@@ -3,8 +3,14 @@
  * Backend calls are same-origin under /api.
  */
 
-
 // ============ Types (align with backend schemas) ============
+
+export interface GroupBackend {
+  id: number;
+  name: string;
+  invite_code: string;
+  created_by: number;
+}
 
 export interface ExpenseBackend {
   id: number;
@@ -70,23 +76,46 @@ export interface ReceiptItemCreatePayload {
   unit_price: number;
 }
 
+// ============ Groups API ============
+
+export async function fetchGroups(): Promise<GroupBackend[]> {
+  const res = await fetch(`/api/groups`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fetch groups failed: ${res.status} ${res.statusText}`);
+  }
+
+  return await res.json();
+}
+
+export async function fetchGroupByInviteCode(
+  inviteCode: string
+): Promise<GroupBackend | null> {
+  const groups = await fetchGroups();
+  return groups.find((group) => group.invite_code === inviteCode) ?? null;
+}
+
 // ============ Expenses API ============
 
 export async function fetchExpenses(groupId: number): Promise<ExpenseBackend[]> {
-  try {
-    const res = await fetch(`/api/expenses?group_id=${groupId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) throw new Error(`Fetch expenses failed: ${res.statusText}`);
-    return await res.json();
-  } catch (err) {
-    console.error("Error fetching expenses:", err);
-    return [];
+  const res = await fetch(`/api/expenses?group_id=${groupId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fetch expenses failed: ${res.status} ${res.statusText}`);
   }
+
+  return await res.json();
 }
 
-export async function createExpense(payload: ExpenseCreatePayload): Promise<ExpenseBackend | null> {
+export async function createExpense(
+  payload: ExpenseCreatePayload
+): Promise<ExpenseBackend | null> {
   try {
     const res = await fetch(`/api/expenses`, {
       method: "POST",
@@ -101,7 +130,10 @@ export async function createExpense(payload: ExpenseCreatePayload): Promise<Expe
   }
 }
 
-export async function updateExpense(id: number, payload: Partial<ExpenseCreatePayload>): Promise<ExpenseBackend | null> {
+export async function updateExpense(
+  id: number,
+  payload: Partial<ExpenseCreatePayload>
+): Promise<ExpenseBackend | null> {
   try {
     const res = await fetch(`/api/expenses/${id}`, {
       method: "PUT",
@@ -132,20 +164,21 @@ export async function deleteExpense(id: number): Promise<boolean> {
 // ============ Chores API ============
 
 export async function fetchChores(groupId: number): Promise<ChoreBackend[]> {
-  try {
-    const res = await fetch(`/api/chores?group_id=${groupId}`, {
-      method: "GET",
-      headers: { "Content-Type": "application/json" },
-    });
-    if (!res.ok) throw new Error(`Fetch chores failed: ${res.statusText}`);
-    return await res.json();
-  } catch (err) {
-    console.error("Error fetching chores:", err);
-    return [];
+  const res = await fetch(`/api/chores?group_id=${groupId}`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fetch chores failed: ${res.status} ${res.statusText}`);
   }
+
+  return await res.json();
 }
 
-export async function createChore(payload: ChoreCreatePayload): Promise<ChoreBackend | null> {
+export async function createChore(
+  payload: ChoreCreatePayload
+): Promise<ChoreBackend | null> {
   try {
     const res = await fetch(`/api/chores`, {
       method: "POST",
@@ -160,7 +193,10 @@ export async function createChore(payload: ChoreCreatePayload): Promise<ChoreBac
   }
 }
 
-export async function updateChore(id: number, payload: Partial<ChoreCreatePayload>): Promise<ChoreBackend | null> {
+export async function updateChore(
+  id: number,
+  payload: Partial<ChoreCreatePayload>
+): Promise<ChoreBackend | null> {
   try {
     const res = await fetch(`/api/chores/${id}`, {
       method: "PUT",
@@ -190,7 +226,9 @@ export async function deleteChore(id: number): Promise<boolean> {
 
 // ============ Receipts & Receipt Items API ============
 
-export async function createReceipt(payload: ReceiptCreatePayload): Promise<ReceiptBackend | null> {
+export async function createReceipt(
+  payload: ReceiptCreatePayload
+): Promise<ReceiptBackend | null> {
   try {
     const res = await fetch(`/api/receipts`, {
       method: "POST",
@@ -205,7 +243,9 @@ export async function createReceipt(payload: ReceiptCreatePayload): Promise<Rece
   }
 }
 
-export async function createReceiptItem(payload: ReceiptItemCreatePayload): Promise<ReceiptItemBackend | null> {
+export async function createReceiptItem(
+  payload: ReceiptItemCreatePayload
+): Promise<ReceiptItemBackend | null> {
   try {
     const res = await fetch(`/api/receipt-items`, {
       method: "POST",

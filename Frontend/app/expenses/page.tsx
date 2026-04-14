@@ -12,18 +12,30 @@ import * as api from "../../lib/apiClient";
 import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
 
 const CURRENT_USER_ID = 1;
-const CURRENT_GROUP_ID = 1;
+const CURRENT_GROUP_INVITE_CODE = "LOFT2026A";
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<BackendExpense[]>([]);
+  const [currentGroupId, setCurrentGroupId] = useState<number | null>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
   const loadExpenses = useCallback(async () => {
     setLoading(true);
     setError("");
+
     try {
-      const data = await api.fetchExpenses(CURRENT_GROUP_ID);
+      const group = await api.fetchGroupByInviteCode(CURRENT_GROUP_INVITE_CODE);
+
+      if (!group) {
+        throw new Error(
+          `Group with invite code ${CURRENT_GROUP_INVITE_CODE} not found`
+        );
+      }
+
+      setCurrentGroupId(group.id);
+
+      const data = await api.fetchExpenses(group.id);
       setExpenses(data);
     } catch (err) {
       setError("Failed to load expenses. Please try again.");
@@ -43,16 +55,23 @@ export default function ExpensesPage() {
     category: string;
     splitMethod: string;
   }) => {
+    if (!currentGroupId) {
+      setError("Group is not loaded yet.");
+      return;
+    }
+
     try {
       const payload: api.ExpenseCreatePayload = {
-        group_id: CURRENT_GROUP_ID,
+        group_id: currentGroupId,
         paid_by: CURRENT_USER_ID,
         title: expense.name,
         total_amount: expense.amount,
         split_type: "equal",
         receipt_id: null,
       };
+
       const created = await api.createExpense(payload);
+
       if (created) {
         setExpenses((prev) => [created, ...prev]);
         setError("");
@@ -66,16 +85,23 @@ export default function ExpensesPage() {
   };
 
   const handleScan = async (receipt: ScannedReceipt, receiptId: number) => {
+    if (!currentGroupId) {
+      setError("Group is not loaded yet.");
+      return;
+    }
+
     try {
       const payload: api.ExpenseCreatePayload = {
-        group_id: CURRENT_GROUP_ID,
+        group_id: currentGroupId,
         paid_by: CURRENT_USER_ID,
         title: receipt.storeName,
         total_amount: receipt.totalAmount,
         split_type: "equal",
         receipt_id: receiptId,
       };
+
       const created = await api.createExpense(payload);
+
       if (created) {
         setExpenses((prev) => [created, ...prev]);
         setError("");
@@ -122,7 +148,7 @@ export default function ExpensesPage() {
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_360px] gap-6">
             <ReceiptUploader
               onScan={handleScan}
-              groupId={CURRENT_GROUP_ID}
+              groupId={currentGroupId ?? 0}
               userId={CURRENT_USER_ID}
             />
             <ManualEntryForm onAdd={handleManualAdd} />
