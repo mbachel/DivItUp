@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from decimal import Decimal
 from datetime import datetime
 
@@ -22,5 +22,4 @@ class PaymentUpdate(BaseModel):
 
 class Payment(PaymentBase):
     id: int
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

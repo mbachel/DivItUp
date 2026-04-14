@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from decimal import Decimal
 
 class ReceiptBase(BaseModel):
@@ -21,5 +21,4 @@ class ReceiptUpdate(BaseModel):
 
 class Receipt(ReceiptBase):
     id: int
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
