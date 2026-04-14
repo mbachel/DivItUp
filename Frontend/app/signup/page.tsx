@@ -38,10 +38,11 @@ export default function SignupPage() {
 
         {/* Top logo */}
         <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 z-10">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-lg">home</span>
-            </div>
-            <span className="text-white font-extrabold text-lg font-headline">DivItUp</span>
+            <img
+                src="/DivItUpLogo.png"
+                alt="DivItUp"
+                className="w-24 object-contain"
+            />
         </Link>
 
         {/* Bottom text card */}
@@ -274,7 +275,7 @@ export default function SignupPage() {
 
         {/* Footer */}
         <p className="text-center text-[10px] text-outline uppercase tracking-widest mt-12">
-          © 2024 DivItUp • Privacy • Terms
+          © 2026 DivItUp • Privacy • Terms
         </p>
       </div>
     </div>

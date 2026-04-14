@@ -30,12 +30,13 @@ export default function LoginPage() {
 
         {/* Top logo */}
         <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 z-10">
-            <div className="w-8 h-8 bg-white rounded-lg flex items-center justify-center">
-                <span className="material-symbols-outlined text-primary text-lg">home</span>
-            </div>
-            <span className="text-white font-extrabold text-lg font-headline">DivItUp</span>
+            <img
+                src="/DivItUpLogo.png"
+                alt="DivItUp"
+                className="w-24 object-contain"
+            />
         </Link>
-        
+
         {/* Bottom text card */}
         <div className="absolute bottom-10 left-8 right-8 z-10">
           <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
@@ -161,7 +162,7 @@ export default function LoginPage() {
 
         {/* Footer */}
         <p className="text-center text-[10px] text-outline uppercase tracking-widest mt-12">
-          © 2024 DivItUp • Privacy • Terms
+          © 2026 DivItUp • Privacy • Terms
         </p>
       </div>
     </div>
