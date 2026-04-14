@@ -1,5 +1,6 @@
 "use client";
 
+import TopBar from "@/components/TopBar";
 import SideNav from "../../components/SideNav";
 import BottomNav from "../../components/BottomNav";
 import RotationAlert from "../../components/chores/RotationAlert";
@@ -30,36 +31,7 @@ export default function ChoresPage() {
          {/* Adding Comments for Clarity */}
       <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
         {/* Top bar */}
-        <header className="flex justify-between items-center px-6 py-4 bg-surface sticky top-0 z-40 border-b border-outline-variant/20">
-          <div className="md:hidden">
-            <span className="text-xl font-extrabold text-[#00606e] font-headline">H&amp;H</span>
-          </div>
-
-          <h1 className="hidden md:block text-2xl font-extrabold text-on-surface font-headline">
-            Chores Board
-          </h1>
-
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-secondary-fixed/50 px-4 py-2 rounded-full">
-              <span
-                className="material-symbols-outlined text-secondary text-base"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                stars
-              </span>
-              <span className="text-sm font-bold text-secondary">1,240</span>
-              <span className="text-xs text-secondary/70 font-medium">Points</span>
-            </div>
-            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-full">
-              <span className="material-symbols-outlined text-outline text-base">
-                account_balance_wallet
-              </span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-              ME
-            </div>
-          </div>
-        </header>
+        <TopBar />
 
         <div className="p-6 md:p-8 space-y-8">
 

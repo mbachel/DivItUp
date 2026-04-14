@@ -5,6 +5,7 @@ import BottomNav from "../../components/BottomNav";
 import ReceiptUploader from "../../components/expenses/ReceiptUploader";
 import ManualEntryForm from "../../components/expenses/ManualEntryForm";
 import ExpenseTable from "../../components/expenses/ExpenseTable";
+import TopBar from "../../components/TopBar";
 import { useState } from "react";
 import type { Expense } from "../../components/expenses/ExpenseTable";
 import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
@@ -70,36 +71,7 @@ export default function ExpensesPage() {
         {/* Adding Comments for Clarity */}
       <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
         {/* Top bar */}
-        <header className="flex justify-between items-center px-6 py-4 bg-surface sticky top-0 z-40 border-b border-outline-variant/20">
-          {/* Mobile logo */}
-          <div className="md:hidden">
-            <span className="text-xl font-extrabold text-[#00606e] font-headline">H&amp;H</span>
-          </div>
-
-          {/* Search */}
-          <div className="hidden md:flex items-center gap-3 bg-surface-container-low px-4 py-2.5 rounded-full flex-1 max-w-md">
-            <span className="material-symbols-outlined text-outline text-lg">search</span>
-            <input
-              type="text"
-              placeholder="Search house expenses..."
-              className="bg-transparent text-sm text-on-surface placeholder:text-outline focus:outline-none w-full"
-            />
-          </div>
-
-          {/* Right */}
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-surface-container-low px-4 py-2 rounded-full">
-              <span className="material-symbols-outlined text-[#007B8C] text-base">account_balance_wallet</span>
-              <span className="text-sm font-bold text-[#007B8C]">${totalBalance.toLocaleString()}</span>
-            </div>
-            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-full">
-              <span className="material-symbols-outlined text-[#007B8C] text-base" style={{ fontVariationSettings: "'FILL' 1" }}>stars</span>
-            </div>
-            <div className="w-9 h-9 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-              ME
-            </div>
-          </div>
-        </header>
+        <TopBar />
 
         {/* Page body */}
         <div className="p-6 md:p-10 space-y-10">
