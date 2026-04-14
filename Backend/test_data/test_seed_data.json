@@ -27,6 +27,20 @@
       "email": "devon.demo@divitup.test",
       "password_hash": "fake_hash_devon",
       "full_name": "Devon Patel"
+    },
+    {
+      "key": "agam",
+      "username": "Agsbajs",
+      "email": "bajajagampreet@gmail.com",
+      "password_hash": "123456",
+      "full_name": "Agam Bajaj"
+    },
+    {
+      "key": "soumil",
+      "username": "kotharisoumil11",
+      "email": "kotharisoumil@gmail.com",
+      "password_hash": "ILoveRasmus",
+      "full_name": "Soumil Kothari"
     }
   ],
   "groups": [
