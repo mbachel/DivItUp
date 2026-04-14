@@ -1,5 +1,6 @@
 "use client";
 
+import TopBar from "@/components/TopBar";
 import SideNav from "../../components/SideNav";
 import BottomNav from "../../components/BottomNav";
 import HouseHarmonyCard from "../../components/summary/HouseHarmonyCard";
@@ -52,43 +53,7 @@ export default function SummaryPage() {
 
       <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
         {/* Top bar */}
-        <header className="flex justify-between items-center px-6 py-4 bg-surface sticky top-0 z-40 border-b border-outline-variant/20">
-          <div className="md:hidden">
-            <span className="text-xl font-extrabold text-[#00606e] font-headline">H&amp;H</span>
-          </div>
-
-          <h1 className="hidden md:block text-2xl font-extrabold text-on-surface font-headline">
-            Group Summary
-          </h1>
-
-          <div className="flex items-center gap-4">
-            {/* Wallet */}
-            <div className="flex items-center gap-2 bg-surface-container-low px-3 py-2 rounded-full">
-              <span className="material-symbols-outlined text-outline text-base">
-                account_balance_wallet
-              </span>
-            </div>
-            {/* Points */}
-            <div className="flex items-center gap-1.5 bg-surface-container-low px-3 py-2 rounded-full">
-              <span
-                className="material-symbols-outlined text-amber-500 text-base"
-                style={{ fontVariationSettings: "'FILL' 1" }}
-              >
-                stars
-              </span>
-            </div>
-            {/* User info */}
-            <div className="flex items-center gap-3">
-              <div className="text-right hidden md:block">
-                <p className="text-sm font-bold text-on-surface">Alex Rivera</p>
-                <p className="text-xs text-outline">1,240 Hearth Points</p>
-              </div>
-              <div className="w-10 h-10 rounded-full bg-primary flex items-center justify-center text-white text-xs font-bold">
-                AR
-              </div>
-            </div>
-          </div>
-        </header>
+        <TopBar />
 
         <div className="p-6 md:p-8 space-y-8">
 
