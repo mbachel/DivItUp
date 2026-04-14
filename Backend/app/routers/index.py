@@ -6,7 +6,7 @@ from . import (
     chores,
     chore_assignments,
     expenses,
-    expense_splits,
+    expenses_splits as expense_splits,
     receipts,
     receipt_items,
     payments

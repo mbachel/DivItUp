@@ -1,25 +1,27 @@
 from typing import Optional
 from pydantic import BaseModel
-from datetime import datetime
+from decimal import Decimal
 
-class ChoreAssignmentBase(BaseModel):
-    chore_id: int
-    assigned_to: int
-    due_date: datetime
-    status: str
-    completed_at: Optional[datetime] = None
+class ExpenseBase(BaseModel):
+    group_id: int
+    paid_by: int
+    receipt_id: Optional[int] = None
+    title: str
+    total_amount: Decimal
+    split_type: str
 
-class ChoreAssignmentCreate(ChoreAssignmentBase):
+class ExpenseCreate(ExpenseBase):
     pass
 
-class ChoreAssignmentUpdate(BaseModel):
-    chore_id: Optional[int] = None
-    assigned_to: Optional[int] = None
-    due_date: Optional[datetime] = None
-    status: Optional[str] = None
-    completed_at: Optional[datetime] = None
+class ExpenseUpdate(BaseModel):
+    group_id: Optional[int] = None
+    paid_by: Optional[int] = None
+    receipt_id: Optional[int] = None
+    title: Optional[str] = None
+    total_amount: Optional[Decimal] = None
+    split_type: Optional[str] = None
 
-class ChoreAssignment(ChoreAssignmentBase):
+class Expense(ExpenseBase):
     id: int
     class ConfigDict:
         from_attributes = True
