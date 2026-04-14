@@ -9,4 +9,90 @@ services:
       - MINDEE_MODEL_ID=${MINDEE_MODEL_ID}
     ports:
       - "127.0.0.1:3000:3000"
+    networks:
+      - edge
+      - internal
     restart: unless-stopped
+
+  backend:
+    container_name: divitup-backend
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+      - APP_HOST=${APP_HOST}
+      - APP_PORT=${APP_PORT}
+      - SECRET_KEY=${SECRET_KEY}
+      - ALGORITHM=${ALGORITHM}
+      - ACCESS_TOKEN_EXPIRE_MINUTES=${ACCESS_TOKEN_EXPIRE_MINUTES}
+    depends_on:
+      db:
+        condition: service_healthy
+      db-seed:
+        condition: service_completed_successfully
+    expose:
+      - "8000"
+    networks:
+      - internal
+    restart: unless-stopped
+
+  db-seed:
+    container_name: divitup-db-seed
+    build:
+      context: ./Backend
+      dockerfile: Dockerfile
+    command:
+      - sh
+      - -c
+      - |
+        set -eu
+        if [ -f /seed-dbdata/.seeded_divitup ]; then
+          echo "[db-seed] Seed already applied for this DB volume. Skipping."
+          exit 0
+        fi
+        if [ -z "${DATABASE_URL}" ]; then
+          echo "[db-seed] DATABASE_URL is empty. Aborting."
+          exit 1
+        fi
+        echo "[db-seed] Running seed_from_json.py..."
+        python /app/scripts/seed_from_json.py
+        touch /seed-dbdata/.seeded_divitup
+        echo "[db-seed] Seed complete."
+    environment:
+      - DATABASE_URL=${DATABASE_URL}
+    depends_on:
+      db:
+        condition: service_healthy
+    volumes:
+      - divitup_mysql_data:/seed-dbdata
+    networks:
+      - internal
+    restart: "no"
+
+  db:
+    container_name: divitup-db
+    image: mysql:8.4
+    environment:
+      - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
+      - MYSQL_DATABASE=${MYSQL_DATABASE}
+    expose:
+      - "3306"
+    volumes:
+      - divitup_mysql_data:/var/lib/mysql
+    networks:
+      - internal
+    healthcheck:
+      test: ["CMD-SHELL", "mysqladmin ping -h 127.0.0.1 -uroot -p$$MYSQL_ROOT_PASSWORD --silent"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+    restart: unless-stopped
+
+volumes:
+  divitup_mysql_data:
+
+networks:
+  edge:
+  internal:
+    internal: true
