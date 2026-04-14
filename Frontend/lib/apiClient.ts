@@ -75,7 +75,7 @@ export interface ReceiptItemCreatePayload {
 
 export async function fetchExpenses(groupId: number): Promise<ExpenseBackend[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/expenses`, {
+    const res = await fetch(`${API_BASE_URL}/expenses?group_id=${groupId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -134,7 +134,7 @@ export async function deleteExpense(id: number): Promise<boolean> {
 
 export async function fetchChores(groupId: number): Promise<ChoreBackend[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/chores`, {
+    const res = await fetch(`${API_BASE_URL}/chores?group_id=${groupId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });

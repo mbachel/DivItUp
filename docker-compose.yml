@@ -4,9 +4,12 @@ services:
     build:
       context: ./Frontend
       dockerfile: Dockerfile
+      args:
+        - NEXT_PUBLIC_API_URL=http://localhost:8001
     environment:
       - MINDEE_API_KEY=${MINDEE_API_KEY}
       - MINDEE_MODEL_ID=${MINDEE_MODEL_ID}
+      - NEXT_PUBLIC_API_URL=http://localhost:8001
     ports:
       - "127.0.0.1:3000:3000"
     networks:
@@ -31,9 +34,10 @@ services:
         condition: service_healthy
       db-seed:
         condition: service_completed_successfully
-    expose:
-      - "8000"
+    ports:
+      - "8001:8000/tcp"
     networks:
+      - edge
       - internal
     restart: unless-stopped
 
@@ -72,7 +76,7 @@ services:
 
   db:
     container_name: divitup-db
-    image: mysql:8.4
+    image: mysql:9.6
     environment:
       - MYSQL_ROOT_PASSWORD=${MYSQL_ROOT_PASSWORD}
       - MYSQL_DATABASE=${MYSQL_DATABASE}
