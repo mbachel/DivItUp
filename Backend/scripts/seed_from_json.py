@@ -1,9 +1,12 @@
 import argparse
 import json
 import sys
-from datetime import datetime
+from datetime import datetime, timezone
 from decimal import Decimal
 from pathlib import Path
+
+from sqlalchemy import DateTime, Enum
+from sqlalchemy.sql.sqltypes import Numeric
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
 if str(PROJECT_ROOT) not in sys.path:
@@ -11,19 +14,33 @@ if str(PROJECT_ROOT) not in sys.path:
 
 from app.dependencies.database import SessionLocal
 from app.models import model_loader
-from app.models.chore_assignments import ChoreAssignments, ChoreStatus
-from app.models.chores import ChoreFrequency, Chores
+from app.models.chore_assignments import ChoreAssignments
+from app.models.chores import Chores
 from app.models.expense_splits import ExpenseSplits
-from app.models.expenses import Expenses, SplitType
-from app.models.group_members import GroupMembers, GroupRole
+from app.models.expenses import Expenses
+from app.models.group_members import GroupMembers
 from app.models.groups import Groups
 from app.models.payments import Payments
 from app.models.receipt_items import ReceiptItems
-from app.models.receipts import ReceiptStatus, Receipts
+from app.models.receipts import Receipts
 from app.models.users import Users
 
 
 DEFAULT_FIXTURE_PATH = Path(__file__).resolve().parents[1] / "test_data" / "test_seed_data.json"
+
+TABLE_ORDER = [
+    ("users", Users),
+    ("groups", Groups),
+    ("group_members", GroupMembers),
+    ("chores", Chores),
+    ("chore_assignments", ChoreAssignments),
+    ("receipts", Receipts),
+    ("receipt_items", ReceiptItems),
+    ("expenses", Expenses),
+    ("expense_splits", ExpenseSplits),
+    ("payments", Payments),
+]
+EXPECTED_TABLE_NAMES = {table_name for table_name, _ in TABLE_ORDER}
 
 
 def to_decimal(value):
@@ -38,295 +55,101 @@ def to_datetime(value):
     return datetime.fromisoformat(value)
 
 
+def normalize_datetime(value):
+    if value is None:
+        return None
+    if value.tzinfo is None:
+        return value
+    return value.astimezone(timezone.utc).replace(tzinfo=None)
+
+
 def parse_fixture(path: Path):
     with path.open("r", encoding="utf-8") as f:
         return json.load(f)
 
 
-def get_or_create_user(db, payload, created_counts):
-    item = db.query(Users).filter(Users.email == payload["email"]).first()
-    if item:
-        return item
+def ensure_top_level_tables(fixture):
+    if not isinstance(fixture, dict):
+        raise ValueError("Fixture root must be an object keyed by table names.")
 
-    item = Users(
-        username=payload["username"],
-        email=payload["email"],
-        password_hash=payload["password_hash"],
-        full_name=payload["full_name"],
-    )
-    db.add(item)
+    actual = set(fixture.keys())
+    missing = sorted(EXPECTED_TABLE_NAMES - actual)
+    extra = sorted(actual - EXPECTED_TABLE_NAMES)
+    if missing or extra:
+        raise ValueError(
+            f"Fixture tables mismatch. Missing: {missing or 'none'} | Extra: {extra or 'none'}"
+        )
+
+
+def validate_row_shape(table_name, model, row, row_index):
+    if not isinstance(row, dict):
+        raise ValueError(f"{table_name}[{row_index}] must be an object.")
+
+    expected_columns = {column.name for column in model.__table__.columns}
+    actual_columns = set(row.keys())
+
+    missing = sorted(expected_columns - actual_columns)
+    extra = sorted(actual_columns - expected_columns)
+    if missing or extra:
+        raise ValueError(
+            f"{table_name}[{row_index}] keys mismatch. Missing: {missing or 'none'} | Extra: {extra or 'none'}"
+        )
+
+
+def parse_column_value(column, value):
+    if value is None:
+        return None
+
+    if isinstance(column.type, Enum):
+        enum_class = getattr(column.type, "enum_class", None)
+        return enum_class(value) if enum_class else value
+
+    if isinstance(column.type, DateTime):
+        return normalize_datetime(to_datetime(value))
+
+    if isinstance(column.type, Numeric):
+        return to_decimal(value)
+
+    return value
+
+
+def upsert_table_rows(db, table_name, model, rows):
+    if not isinstance(rows, list):
+        raise ValueError(f"{table_name} must be an array of table rows.")
+
+    columns_by_name = {column.name: column for column in model.__table__.columns}
+    created = 0
+    updated = 0
+
+    for row_index, row in enumerate(rows):
+        validate_row_shape(table_name, model, row, row_index)
+
+        parsed_row = {
+            column_name: parse_column_value(column, row[column_name])
+            for column_name, column in columns_by_name.items()
+        }
+
+        row_id = parsed_row["id"]
+        existing = db.get(model, row_id)
+
+        if existing is None:
+            db.add(model(**parsed_row))
+            created += 1
+            continue
+
+        has_change = False
+        for column_name, value in parsed_row.items():
+            if column_name == "id":
+                continue
+            if getattr(existing, column_name) != value:
+                setattr(existing, column_name, value)
+                has_change = True
+
+        if has_change:
+            updated += 1
+
     db.commit()
-    db.refresh(item)
-    created_counts["users"] += 1
-    return item
-
-
-def get_or_create_group(db, payload, user_map, created_counts):
-    item = db.query(Groups).filter(Groups.invite_code == payload["invite_code"]).first()
-    if item:
-        return item
-
-    item = Groups(
-        name=payload["name"],
-        invite_code=payload["invite_code"],
-        created_by=user_map[payload["created_by"]].id,
-    )
-    db.add(item)
-    db.commit()
-    db.refresh(item)
-    created_counts["groups"] += 1
-    return item
-
-
-def seed_users(db, fixture, created_counts):
-    user_map = {}
-    for user_data in fixture.get("users", []):
-        user_map[user_data["key"]] = get_or_create_user(db, user_data, created_counts)
-    return user_map
-
-
-def seed_groups(db, fixture, user_map, created_counts):
-    group_map = {}
-    for group_data in fixture.get("groups", []):
-        group_map[group_data["key"]] = get_or_create_group(db, group_data, user_map, created_counts)
-    return group_map
-
-
-def seed_group_members(db, fixture, user_map, group_map, created_counts):
-    for payload in fixture.get("group_members", []):
-        group_id = group_map[payload["group"]].id
-        user_id = user_map[payload["user"]].id
-
-        existing = (
-            db.query(GroupMembers)
-            .filter(GroupMembers.group_id == group_id, GroupMembers.user_id == user_id)
-            .first()
-        )
-        if existing:
-            continue
-
-        item = GroupMembers(
-            group_id=group_id,
-            user_id=user_id,
-            role=GroupRole(payload["role"]),
-            is_restricted=payload["is_restricted"],
-        )
-        db.add(item)
-        db.commit()
-        created_counts["group_members"] += 1
-
-
-def seed_chores(db, fixture, group_map, created_counts):
-    chore_map = {}
-    for payload in fixture.get("chores", []):
-        group_id = group_map[payload["group"]].id
-        existing = (
-            db.query(Chores)
-            .filter(Chores.group_id == group_id, Chores.title == payload["title"])
-            .first()
-        )
-        if existing:
-            chore_map[payload["key"]] = existing
-            continue
-
-        item = Chores(
-            group_id=group_id,
-            title=payload["title"],
-            frequency=ChoreFrequency(payload["frequency"]),
-        )
-        db.add(item)
-        db.commit()
-        db.refresh(item)
-        created_counts["chores"] += 1
-        chore_map[payload["key"]] = item
-    return chore_map
-
-
-def seed_chore_assignments(db, fixture, chore_map, user_map, created_counts):
-    for payload in fixture.get("chore_assignments", []):
-        chore_id = chore_map[payload["chore"]].id
-        assigned_to = user_map[payload["assigned_to"]].id
-        due_date = to_datetime(payload["due_date"])
-
-        existing = (
-            db.query(ChoreAssignments)
-            .filter(
-                ChoreAssignments.chore_id == chore_id,
-                ChoreAssignments.assigned_to == assigned_to,
-                ChoreAssignments.due_date == due_date,
-            )
-            .first()
-        )
-        if existing:
-            continue
-
-        item = ChoreAssignments(
-            chore_id=chore_id,
-            assigned_to=assigned_to,
-            due_date=due_date,
-            status=ChoreStatus(payload["status"]),
-            completed_at=to_datetime(payload["completed_at"]),
-        )
-        db.add(item)
-        db.commit()
-        created_counts["chore_assignments"] += 1
-
-
-def seed_receipts(db, fixture, group_map, user_map, created_counts):
-    receipt_map = {}
-    for payload in fixture.get("receipts", []):
-        group_id = group_map[payload["group"]].id
-        existing = (
-            db.query(Receipts)
-            .filter(Receipts.group_id == group_id, Receipts.image_url == payload["image_url"])
-            .first()
-        )
-        if existing:
-            receipt_map[payload["key"]] = existing
-            continue
-
-        item = Receipts(
-            group_id=group_id,
-            uploaded_by=user_map[payload["uploaded_by"]].id,
-            image_url=payload["image_url"],
-            total_extracted=to_decimal(payload["total_extracted"]),
-            status=ReceiptStatus(payload["status"]),
-        )
-        db.add(item)
-        db.commit()
-        db.refresh(item)
-        created_counts["receipts"] += 1
-        receipt_map[payload["key"]] = item
-    return receipt_map
-
-
-def seed_receipt_items(db, fixture, receipt_map, created_counts):
-    for payload in fixture.get("receipt_items", []):
-        receipt_id = receipt_map[payload["receipt"]].id
-        unit_price = to_decimal(payload["unit_price"])
-
-        existing = (
-            db.query(ReceiptItems)
-            .filter(
-                ReceiptItems.receipt_id == receipt_id,
-                ReceiptItems.item_name == payload["item_name"],
-                ReceiptItems.quantity == payload["quantity"],
-                ReceiptItems.unit_price == unit_price,
-            )
-            .first()
-        )
-        if existing:
-            continue
-
-        item = ReceiptItems(
-            receipt_id=receipt_id,
-            item_name=payload["item_name"],
-            quantity=payload["quantity"],
-            unit_price=unit_price,
-        )
-        db.add(item)
-        db.commit()
-        created_counts["receipt_items"] += 1
-
-
-def seed_expenses(db, fixture, group_map, user_map, receipt_map, created_counts):
-    expense_map = {}
-    for payload in fixture.get("expenses", []):
-        group_id = group_map[payload["group"]].id
-        total_amount = to_decimal(payload["total_amount"])
-
-        existing = (
-            db.query(Expenses)
-            .filter(
-                Expenses.group_id == group_id,
-                Expenses.title == payload["title"],
-                Expenses.total_amount == total_amount,
-            )
-            .first()
-        )
-        if existing:
-            expense_map[payload["key"]] = existing
-            continue
-
-        receipt_id = None
-        if payload.get("receipt"):
-            receipt_id = receipt_map[payload["receipt"]].id
-
-        item = Expenses(
-            group_id=group_id,
-            paid_by=user_map[payload["paid_by"]].id,
-            receipt_id=receipt_id,
-            title=payload["title"],
-            total_amount=total_amount,
-            split_type=SplitType(payload["split_type"]),
-        )
-        db.add(item)
-        db.commit()
-        db.refresh(item)
-        created_counts["expenses"] += 1
-        expense_map[payload["key"]] = item
-    return expense_map
-
-
-def seed_expense_splits(db, fixture, expense_map, user_map, created_counts):
-    split_map = {}
-    for payload in fixture.get("expense_splits", []):
-        expense_id = expense_map[payload["expense"]].id
-        user_id = user_map[payload["user"]].id
-
-        existing = (
-            db.query(ExpenseSplits)
-            .filter(ExpenseSplits.expense_id == expense_id, ExpenseSplits.user_id == user_id)
-            .first()
-        )
-        if existing:
-            split_map[(payload["expense"], payload["user"])] = existing
-            continue
-
-        item = ExpenseSplits(
-            expense_id=expense_id,
-            user_id=user_id,
-            amount_owed=to_decimal(payload["amount_owed"]),
-            is_settled=payload["is_settled"],
-        )
-        db.add(item)
-        db.commit()
-        db.refresh(item)
-        created_counts["expense_splits"] += 1
-        split_map[(payload["expense"], payload["user"])] = item
-    return split_map
-
-
-def seed_payments(db, fixture, user_map, split_map, created_counts):
-    for payload in fixture.get("payments", []):
-        split_key = (payload["expense"], payload["payer"])
-        expense_split_id = split_map.get(split_key).id if split_map.get(split_key) else None
-        paid_at = to_datetime(payload["paid_at"])
-        amount = to_decimal(payload["amount"])
-
-        existing = (
-            db.query(Payments)
-            .filter(
-                Payments.payer_id == user_map[payload["payer"]].id,
-                Payments.payee_id == user_map[payload["payee"]].id,
-                Payments.amount == amount,
-                Payments.paid_at == paid_at,
-            )
-            .first()
-        )
-        if existing:
-            continue
-
-        item = Payments(
-            payer_id=user_map[payload["payer"]].id,
-            payee_id=user_map[payload["payee"]].id,
-            expense_split_id=expense_split_id,
-            amount=amount,
-            paid_at=paid_at,
-        )
-        db.add(item)
-        db.commit()
-        created_counts["payments"] += 1
+    return created, updated
 
 
 def count_all(db):
@@ -346,33 +169,18 @@ def count_all(db):
 
 def seed_database(fixture_path: Path):
     fixture = parse_fixture(fixture_path)
+    ensure_top_level_tables(fixture)
     model_loader.index()
 
-    created_counts = {
-        "users": 0,
-        "groups": 0,
-        "group_members": 0,
-        "chores": 0,
-        "chore_assignments": 0,
-        "receipts": 0,
-        "receipt_items": 0,
-        "expenses": 0,
-        "expense_splits": 0,
-        "payments": 0,
-    }
+    created_counts = {table_name: 0 for table_name, _ in TABLE_ORDER}
+    updated_counts = {table_name: 0 for table_name, _ in TABLE_ORDER}
 
     db = SessionLocal()
     try:
-        user_map = seed_users(db, fixture, created_counts)
-        group_map = seed_groups(db, fixture, user_map, created_counts)
-        seed_group_members(db, fixture, user_map, group_map, created_counts)
-        chore_map = seed_chores(db, fixture, group_map, created_counts)
-        seed_chore_assignments(db, fixture, chore_map, user_map, created_counts)
-        receipt_map = seed_receipts(db, fixture, group_map, user_map, created_counts)
-        seed_receipt_items(db, fixture, receipt_map, created_counts)
-        expense_map = seed_expenses(db, fixture, group_map, user_map, receipt_map, created_counts)
-        split_map = seed_expense_splits(db, fixture, expense_map, user_map, created_counts)
-        seed_payments(db, fixture, user_map, split_map, created_counts)
+        for table_name, model in TABLE_ORDER:
+            created, updated = upsert_table_rows(db, table_name, model, fixture[table_name])
+            created_counts[table_name] = created
+            updated_counts[table_name] = updated
 
         total_counts = count_all(db)
     except Exception:
@@ -384,6 +192,10 @@ def seed_database(fixture_path: Path):
     print("Seed completed.")
     print("Created rows by table:")
     for key, value in created_counts.items():
+        print(f"  {key}: {value}")
+
+    print("Updated rows by table:")
+    for key, value in updated_counts.items():
         print(f"  {key}: {value}")
 
     print("Current total rows by table:")

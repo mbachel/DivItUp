@@ -1,120 +1,141 @@
 {
   "users": [
     {
-      "key": "alex",
-      "username": "alex_demo",
-      "email": "alex.demo@divitup.test",
+      "id": 1001,
+      "username": "alex_model_seed",
+      "email": "alex.model.seed@divitup.test",
       "password_hash": "fake_hash_alex",
       "full_name": "Alex Rivera"
     },
     {
-      "key": "blair",
-      "username": "blair_demo",
-      "email": "blair.demo@divitup.test",
+      "id": 1002,
+      "username": "blair_model_seed",
+      "email": "blair.model.seed@divitup.test",
       "password_hash": "fake_hash_blair",
       "full_name": "Blair Thompson"
     },
     {
-      "key": "casey",
-      "username": "casey_demo",
-      "email": "casey.demo@divitup.test",
+      "id": 1003,
+      "username": "casey_model_seed",
+      "email": "casey.model.seed@divitup.test",
       "password_hash": "fake_hash_casey",
       "full_name": "Casey Nguyen"
     },
     {
-      "key": "devon",
-      "username": "devon_demo",
-      "email": "devon.demo@divitup.test",
+      "id": 1004,
+      "username": "devon_model_seed",
+      "email": "devon.model.seed@divitup.test",
       "password_hash": "fake_hash_devon",
       "full_name": "Devon Patel"
     },
     {
-      "key": "agam",
-      "username": "Agsbajs",
-      "email": "bajajagampreet@gmail.com",
-      "password_hash": "123456",
+      "id": 1005,
+      "username": "agam_model_seed",
+      "email": "agam.model.seed@divitup.test",
+      "password_hash": "fake_hash_agam",
       "full_name": "Agam Bajaj"
     },
     {
-      "key": "soumil",
-      "username": "kotharisoumil11",
-      "email": "kotharisoumil@gmail.com",
-      "password_hash": "ILoveRasmus",
+      "id": 1006,
+      "username": "soumil_model_seed",
+      "email": "soumil.model.seed@divitup.test",
+      "password_hash": "fake_hash_soumil",
       "full_name": "Soumil Kothari"
     }
   ],
   "groups": [
     {
-      "key": "loft_house",
-      "name": "Loft House",
-      "invite_code": "LOFT2026A",
-      "created_by": "alex"
+      "id": 2001,
+      "name": "Loft House Model",
+      "invite_code": "LOFT26MODEL",
+      "created_by": 1001
     }
   ],
   "group_members": [
     {
-      "group": "loft_house",
-      "user": "alex",
+      "id": 3001,
+      "group_id": 2001,
+      "user_id": 1001,
       "role": "admin",
       "is_restricted": false
     },
     {
-      "group": "loft_house",
-      "user": "blair",
+      "id": 3002,
+      "group_id": 2001,
+      "user_id": 1002,
       "role": "member",
       "is_restricted": false
     },
     {
-      "group": "loft_house",
-      "user": "casey",
+      "id": 3003,
+      "group_id": 2001,
+      "user_id": 1003,
       "role": "member",
       "is_restricted": false
     },
     {
-      "group": "loft_house",
-      "user": "devon",
+      "id": 3004,
+      "group_id": 2001,
+      "user_id": 1004,
       "role": "member",
       "is_restricted": true
+    },
+    {
+      "id": 3005,
+      "group_id": 2001,
+      "user_id": 1005,
+      "role": "member",
+      "is_restricted": false
+    },
+    {
+      "id": 3006,
+      "group_id": 2001,
+      "user_id": 1006,
+      "role": "member",
+      "is_restricted": false
     }
   ],
   "chores": [
     {
-      "key": "trash_run",
-      "group": "loft_house",
+      "id": 4001,
+      "group_id": 2001,
       "title": "Take out trash",
       "frequency": "weekly"
     },
     {
-      "key": "kitchen_reset",
-      "group": "loft_house",
+      "id": 4002,
+      "group_id": 2001,
       "title": "Kitchen reset",
       "frequency": "daily"
     },
     {
-      "key": "bathroom_clean",
-      "group": "loft_house",
+      "id": 4003,
+      "group_id": 2001,
       "title": "Bathroom deep clean",
       "frequency": "monthly"
     }
   ],
   "chore_assignments": [
     {
-      "chore": "trash_run",
-      "assigned_to": "blair",
+      "id": 5001,
+      "chore_id": 4001,
+      "assigned_to": 1002,
       "due_date": "2026-04-20T09:00:00+00:00",
       "status": "pending",
       "completed_at": null
     },
     {
-      "chore": "kitchen_reset",
-      "assigned_to": "casey",
+      "id": 5002,
+      "chore_id": 4002,
+      "assigned_to": 1003,
       "due_date": "2026-04-16T07:00:00+00:00",
       "status": "pending",
       "completed_at": null
     },
     {
-      "chore": "bathroom_clean",
-      "assigned_to": "devon",
+      "id": 5003,
+      "chore_id": 4003,
+      "assigned_to": 1004,
       "due_date": "2026-04-30T11:00:00+00:00",
       "status": "pending",
       "completed_at": null
@@ -122,29 +143,32 @@
   ],
   "receipts": [
     {
-      "key": "weekly_groceries",
-      "group": "loft_house",
-      "uploaded_by": "alex",
-      "image_url": "https://example.com/receipts/weekly-groceries-001.png",
+      "id": 6001,
+      "group_id": 2001,
+      "uploaded_by": 1001,
+      "image_url": "https://example.com/receipts/weekly-groceries-model-001.png",
       "total_extracted": 82.5,
       "status": "processed"
     }
   ],
   "receipt_items": [
     {
-      "receipt": "weekly_groceries",
+      "id": 7001,
+      "receipt_id": 6001,
       "item_name": "Milk",
       "quantity": 2,
       "unit_price": 3.75
     },
     {
-      "receipt": "weekly_groceries",
+      "id": 7002,
+      "receipt_id": 6001,
       "item_name": "Bread",
       "quantity": 2,
       "unit_price": 2.95
     },
     {
-      "receipt": "weekly_groceries",
+      "id": 7003,
+      "receipt_id": 6001,
       "item_name": "Chicken Breast",
       "quantity": 3,
       "unit_price": 8.35
@@ -152,19 +176,19 @@
   ],
   "expenses": [
     {
-      "key": "groceries_week_1",
-      "group": "loft_house",
-      "paid_by": "alex",
-      "receipt": "weekly_groceries",
+      "id": 8001,
+      "group_id": 2001,
+      "paid_by": 1001,
+      "receipt_id": 6001,
       "title": "Weekly groceries",
       "total_amount": 82.5,
       "split_type": "equal"
     },
     {
-      "key": "cleaning_supplies",
-      "group": "loft_house",
-      "paid_by": "blair",
-      "receipt": null,
+      "id": 8002,
+      "group_id": 2001,
+      "paid_by": 1002,
+      "receipt_id": null,
       "title": "Cleaning supplies",
       "total_amount": 24.0,
       "split_type": "equal"
@@ -172,54 +196,62 @@
   ],
   "expense_splits": [
     {
-      "expense": "groceries_week_1",
-      "user": "blair",
+      "id": 9001,
+      "expense_id": 8001,
+      "user_id": 1002,
       "amount_owed": 20.62,
       "is_settled": false
     },
     {
-      "expense": "groceries_week_1",
-      "user": "casey",
+      "id": 9002,
+      "expense_id": 8001,
+      "user_id": 1003,
       "amount_owed": 20.62,
       "is_settled": true
     },
     {
-      "expense": "groceries_week_1",
-      "user": "devon",
+      "id": 9003,
+      "expense_id": 8001,
+      "user_id": 1004,
       "amount_owed": 20.62,
       "is_settled": false
     },
     {
-      "expense": "cleaning_supplies",
-      "user": "alex",
+      "id": 9004,
+      "expense_id": 8002,
+      "user_id": 1001,
       "amount_owed": 8.0,
       "is_settled": false
     },
     {
-      "expense": "cleaning_supplies",
-      "user": "casey",
+      "id": 9005,
+      "expense_id": 8002,
+      "user_id": 1003,
       "amount_owed": 8.0,
       "is_settled": true
     },
     {
-      "expense": "cleaning_supplies",
-      "user": "devon",
+      "id": 9006,
+      "expense_id": 8002,
+      "user_id": 1004,
       "amount_owed": 8.0,
       "is_settled": false
     }
   ],
   "payments": [
     {
-      "payer": "casey",
-      "payee": "alex",
-      "expense": "groceries_week_1",
+      "id": 10001,
+      "payer_id": 1003,
+      "payee_id": 1001,
+      "expense_split_id": 9002,
       "amount": 20.62,
       "paid_at": "2026-04-12T18:30:00+00:00"
     },
     {
-      "payer": "casey",
-      "payee": "blair",
-      "expense": "cleaning_supplies",
+      "id": 10002,
+      "payer_id": 1003,
+      "payee_id": 1002,
+      "expense_split_id": 9005,
       "amount": 8.0,
       "paid_at": "2026-04-13T12:00:00+00:00"
     }
