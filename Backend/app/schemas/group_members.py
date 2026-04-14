@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 class GroupMemberBase(BaseModel):
     group_id: int
@@ -16,5 +16,4 @@ class GroupMemberUpdate(BaseModel):
 
 class GroupMember(GroupMemberBase):
     id: int
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

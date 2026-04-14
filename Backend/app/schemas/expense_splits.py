@@ -1,5 +1,5 @@
 from typing import Optional
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 from decimal import Decimal
 
 class ExpenseSplitBase(BaseModel):
@@ -19,5 +19,4 @@ class ExpenseSplitUpdate(BaseModel):
 
 class ExpenseSplit(ExpenseSplitBase):
     id: int
-    class ConfigDict:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)

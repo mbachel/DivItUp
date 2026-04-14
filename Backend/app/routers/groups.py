@@ -9,11 +9,11 @@ router = APIRouter(
     prefix="/groups"
 )
 
-@router.post("/", response_model=schema.Group)
+@router.post("", response_model=schema.Group)
 def create(request: schema.GroupCreate, db: Session = Depends(get_db)):
     return controller.create(db=db, request=request)
 
-@router.get("/", response_model=list[schema.Group])
+@router.get("", response_model=list[schema.Group])
 def read_all(db: Session = Depends(get_db)):
     return controller.read_all(db)
 

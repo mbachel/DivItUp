@@ -9,11 +9,11 @@ router = APIRouter(
     prefix="/receipts"
 )
 
-@router.post("/", response_model=schema.Receipt)
+@router.post("", response_model=schema.Receipt)
 def create(request: schema.ReceiptCreate, db: Session = Depends(get_db)):
     return controller.create(db=db, request=request)
 
-@router.get("/", response_model=list[schema.Receipt])
+@router.get("", response_model=list[schema.Receipt])
 def read_all(db: Session = Depends(get_db)):
     return controller.read_all(db)
 

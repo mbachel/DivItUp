@@ -9,11 +9,11 @@ router = APIRouter(
     prefix="/expense-splits"
 )
 
-@router.post("/", response_model=schema.ExpenseSplit)
+@router.post("", response_model=schema.ExpenseSplit)
 def create(request: schema.ExpenseSplitCreate, db: Session = Depends(get_db)):
     return controller.create(db=db, request=request)
 
-@router.get("/", response_model=list[schema.ExpenseSplit])
+@router.get("", response_model=list[schema.ExpenseSplit])
 def read_all(db: Session = Depends(get_db)):
     return controller.read_all(db)
 

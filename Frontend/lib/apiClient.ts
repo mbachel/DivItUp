@@ -1,9 +1,8 @@
 /**
  * Frontend API client for communicating with the backend.
- * Backend runs on http://localhost:8000 (or configured via env var)
+ * Backend calls are same-origin under /api.
  */
 
-const API_BASE_URL = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 // ============ Types (align with backend schemas) ============
 
@@ -75,7 +74,7 @@ export interface ReceiptItemCreatePayload {
 
 export async function fetchExpenses(groupId: number): Promise<ExpenseBackend[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/expenses?group_id=${groupId}`, {
+    const res = await fetch(`/api/expenses?group_id=${groupId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -89,7 +88,7 @@ export async function fetchExpenses(groupId: number): Promise<ExpenseBackend[]> 
 
 export async function createExpense(payload: ExpenseCreatePayload): Promise<ExpenseBackend | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/expenses`, {
+    const res = await fetch(`/api/expenses`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -104,7 +103,7 @@ export async function createExpense(payload: ExpenseCreatePayload): Promise<Expe
 
 export async function updateExpense(id: number, payload: Partial<ExpenseCreatePayload>): Promise<ExpenseBackend | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+    const res = await fetch(`/api/expenses/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -119,7 +118,7 @@ export async function updateExpense(id: number, payload: Partial<ExpenseCreatePa
 
 export async function deleteExpense(id: number): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/expenses/${id}`, {
+    const res = await fetch(`/api/expenses/${id}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error(`Delete expense failed: ${res.statusText}`);
@@ -134,7 +133,7 @@ export async function deleteExpense(id: number): Promise<boolean> {
 
 export async function fetchChores(groupId: number): Promise<ChoreBackend[]> {
   try {
-    const res = await fetch(`${API_BASE_URL}/chores?group_id=${groupId}`, {
+    const res = await fetch(`/api/chores?group_id=${groupId}`, {
       method: "GET",
       headers: { "Content-Type": "application/json" },
     });
@@ -148,7 +147,7 @@ export async function fetchChores(groupId: number): Promise<ChoreBackend[]> {
 
 export async function createChore(payload: ChoreCreatePayload): Promise<ChoreBackend | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/chores`, {
+    const res = await fetch(`/api/chores`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -163,7 +162,7 @@ export async function createChore(payload: ChoreCreatePayload): Promise<ChoreBac
 
 export async function updateChore(id: number, payload: Partial<ChoreCreatePayload>): Promise<ChoreBackend | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/chores/${id}`, {
+    const res = await fetch(`/api/chores/${id}`, {
       method: "PUT",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -178,7 +177,7 @@ export async function updateChore(id: number, payload: Partial<ChoreCreatePayloa
 
 export async function deleteChore(id: number): Promise<boolean> {
   try {
-    const res = await fetch(`${API_BASE_URL}/chores/${id}`, {
+    const res = await fetch(`/api/chores/${id}`, {
       method: "DELETE",
     });
     if (!res.ok) throw new Error(`Delete chore failed: ${res.statusText}`);
@@ -193,7 +192,7 @@ export async function deleteChore(id: number): Promise<boolean> {
 
 export async function createReceipt(payload: ReceiptCreatePayload): Promise<ReceiptBackend | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/receipts`, {
+    const res = await fetch(`/api/receipts`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
@@ -208,7 +207,7 @@ export async function createReceipt(payload: ReceiptCreatePayload): Promise<Rece
 
 export async function createReceiptItem(payload: ReceiptItemCreatePayload): Promise<ReceiptItemBackend | null> {
   try {
-    const res = await fetch(`${API_BASE_URL}/receipt-items`, {
+    const res = await fetch(`/api/receipt-items`, {
       method: "POST",
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
