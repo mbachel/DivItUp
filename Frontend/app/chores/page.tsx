@@ -12,8 +12,7 @@ import { useState, useEffect } from "react";
 import * as api from "../../lib/apiClient";
 import type { Chore } from "../../components/chores/ChoreCard";
 
-// TODO: Replace with actual auth context/hook
-const CURRENT_GROUP_ID = 1;
+const CURRENT_GROUP_INVITE_CODE = "LOFT2026A";
 
 /**
  * Convert backend ChoreBackend to UI Chore type.
@@ -21,7 +20,6 @@ const CURRENT_GROUP_ID = 1;
  * UI needs: id, title, points, dueLabel, assignee, status, (optional: daysLeft)
  */
 function mapBackendChoreToUI(backendChore: api.ChoreBackend): Chore {
-  // Map frequency to reasonable points
   const pointsMap: Record<string, number> = {
     daily: 50,
     weekly: 150,
@@ -39,9 +37,9 @@ function mapBackendChoreToUI(backendChore: api.ChoreBackend): Chore {
         : backendChore.frequency === "weekly"
           ? "Due This Week"
           : "Due This Month",
-    assignee: "Unassigned", // TODO: get assignee from ChoreAssignment
-    status: "pending", // TODO: get status from ChoreAssignment
-    daysLeft: 1, // TODO: calculate from due date
+    assignee: "Unassigned",
+    status: "pending",
+    daysLeft: 1,
   };
 }
 
@@ -50,13 +48,21 @@ export default function ChoresPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
 
-  // ============ Load chores on mount ============
   useEffect(() => {
     const loadChores = async () => {
       setLoading(true);
       setError("");
+
       try {
-        const data = await api.fetchChores(CURRENT_GROUP_ID);
+        const group = await api.fetchGroupByInviteCode(CURRENT_GROUP_INVITE_CODE);
+
+        if (!group) {
+          throw new Error(
+            `Group with invite code ${CURRENT_GROUP_INVITE_CODE} not found`
+          );
+        }
+
+        const data = await api.fetchChores(group.id);
         const mapped = data.map(mapBackendChoreToUI);
         setAllChores(mapped);
       } catch (err) {
@@ -66,19 +72,13 @@ export default function ChoresPage() {
         setLoading(false);
       }
     };
+
     loadChores();
   }, []);
 
-  // ============ Group chores by frequency ============
-  const dailyChores = allChores.filter(
-    (c) => c.dueLabel === "Due Today"
-  );
-  const weeklyChores = allChores.filter(
-    (c) => c.dueLabel === "Due This Week"
-  );
-  const monthlyChores = allChores.filter(
-    (c) => c.dueLabel === "Due This Month"
-  );
+  const dailyChores = allChores.filter((c) => c.dueLabel === "Due Today");
+  const weeklyChores = allChores.filter((c) => c.dueLabel === "Due This Week");
+  const monthlyChores = allChores.filter((c) => c.dueLabel === "Due This Month");
 
   if (loading) {
     return (
@@ -102,15 +102,12 @@ export default function ChoresPage() {
         <TopBar />
 
         <div className="p-6 md:p-8 space-y-8">
-
-          {/* Error message */}
           {error && (
             <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
               {error}
             </div>
           )}
 
-          {/* Rotation alert + streak row */}
           <div className="flex gap-5 items-stretch">
             <RotationAlert
               nextPerson="Emma"
@@ -121,31 +118,25 @@ export default function ChoresPage() {
             <StreakCard streakDays={14} cycle={4} totalCycles={12} />
           </div>
 
-          {/* Three-column chore board + right sidebar */}
           <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_280px] gap-6 items-start">
-
-            {/* Daily column */}
             <ChoreColumn
               title="Daily"
               taskCount={dailyChores.length}
               chores={dailyChores}
             />
 
-            {/* Weekly column */}
             <ChoreColumn
               title="Weekly"
               taskCount={weeklyChores.length}
               chores={weeklyChores}
             />
 
-            {/* Monthly column */}
             <ChoreColumn
               title="Monthly"
               taskCount={monthlyChores.length}
               chores={monthlyChores}
             />
 
-            {/* Right sidebar */}
             <div className="flex flex-col gap-4">
               <EpicTaskCard
                 title="Deep Clean Kitchen Appliances"
@@ -161,7 +152,6 @@ export default function ChoresPage() {
               />
             </div>
           </div>
-
         </div>
       </main>
 
