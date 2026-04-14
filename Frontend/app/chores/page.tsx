@@ -1,6 +1,6 @@
 "use client";
 
-import TopBar from "@/components/TopBar";
+import TopBar from "../../components/TopBar";
 import SideNav from "../../components/SideNav";
 import BottomNav from "../../components/BottomNav";
 import RotationAlert from "../../components/chores/RotationAlert";

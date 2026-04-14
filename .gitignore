@@ -31,9 +31,6 @@
 # root env files
 /.env
 
-# frontend env files
-/Frontend/.env.local
-
 
 # frontend vercel
 /Frontend/.vercel
