@@ -65,6 +65,7 @@ export default function ExpensesPage() {
         total_amount: expense.amount,
         split_type: "equal",
         receipt_id: null,
+        category: expense.category,
       };
 
       const created = await api.createExpense(payload);
@@ -91,10 +92,11 @@ export default function ExpensesPage() {
       const payload: api.ExpenseCreatePayload = {
         group_id: currentGroupId,
         paid_by: CURRENT_USER_ID,
-        title: receipt.storeName,
+        title: receipt.storeName || "Scanned Receipt",
         total_amount: receipt.totalAmount,
         split_type: "equal",
         receipt_id: receiptId,
+        category: receipt.category || "Shopping",
       };
 
       const created = await api.createExpense(payload);

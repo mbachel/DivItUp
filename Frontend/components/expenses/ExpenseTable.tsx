@@ -9,17 +9,20 @@ export interface BackendExpense {
   paid_by: number;
   receipt_id: number | null;
   title: string;
-  total_amount: number | string;
+  total_amount: number;
   split_type: string;
+  category: string | null;
 }
 
 const CATEGORY_STYLES: Record<string, { bg: string; text: string; icon: string }> = {
-  grocery:      { bg: "bg-amber-100",  text: "text-amber-800",  icon: "shopping_basket" },
-  internet:     { bg: "bg-purple-100", text: "text-purple-800", icon: "wifi" },
-  subscription: { bg: "bg-blue-100",   text: "text-blue-800",   icon: "play_circle" },
-  household:    { bg: "bg-teal-100",   text: "text-teal-800",   icon: "home" },
-  rent:         { bg: "bg-red-100",    text: "text-red-800",    icon: "key" },
-  other:        { bg: "bg-gray-100",   text: "text-gray-700",   icon: "receipt" },
+  grocery:       { bg: "bg-amber-100",  text: "text-amber-800",  icon: "shopping_basket" },
+  groceries:     { bg: "bg-amber-100",  text: "text-amber-800",  icon: "shopping_basket" },
+  internet:      { bg: "bg-purple-100", text: "text-purple-800", icon: "wifi" },
+  utilities:     { bg: "bg-teal-100",   text: "text-teal-800",   icon: "bolt" },
+  household:     { bg: "bg-teal-100",   text: "text-teal-800",   icon: "home" },
+  subscription:  { bg: "bg-blue-100",   text: "text-blue-800",   icon: "play_circle" },
+  rent:          { bg: "bg-red-100",    text: "text-red-800",    icon: "key" },
+  other:         { bg: "bg-gray-100",   text: "text-gray-700",   icon: "receipt" },
 };
 
 const SPLIT_DISPLAY: Record<string, { bg: string; text: string; label: string }> = {
@@ -27,7 +30,7 @@ const SPLIT_DISPLAY: Record<string, { bg: string; text: string; label: string }>
   custom: { bg: "bg-purple-50", text: "text-purple-700", label: "Custom Split" },
 };
 
-const FILTERS = ["All Items", "Recent", "By Split Type"];
+const FILTERS = ["All Items", "Recent", "By Split Type", "Category"];
 
 function inferCategoryType(title: string): keyof typeof CATEGORY_STYLES {
   const lower = title.toLowerCase();
@@ -51,11 +54,18 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
 
   const allExpenses = [...localExpenses, ...expenses];
 
-  const filtered = activeFilter === "All Items"
+  const filtered =
+  activeFilter === "All Items"
     ? allExpenses
     : activeFilter === "Recent"
       ? [...allExpenses].sort((a, b) => b.id - a.id)
-      : allExpenses;
+      : activeFilter === "By Split Type"
+        ? [...allExpenses].sort((a, b) => a.split_type.localeCompare(b.split_type))
+        : activeFilter === "Category"
+          ? [...allExpenses].sort((a, b) =>
+              (a.category || "zzzz").localeCompare(b.category || "zzzz")
+            )
+          : allExpenses;
 
   const handleSave = async (updated: BackendExpense) => {
     await api.updateExpense(updated.id, {
@@ -103,9 +113,14 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
 
       {/* Table */}
       <div className="bg-white rounded-2xl border border-outline-variant/40 overflow-hidden">
-        <div className="grid grid-cols-[2fr_1fr_1.5fr_1fr_auto] px-6 py-3 border-b border-outline-variant/30">
-          {["Description", "Amount", "Split Type", "ID", "Action"].map((h) => (
-            <span key={h} className="text-[10px] font-bold uppercase tracking-widest text-outline">
+        <div className="grid grid-cols-[2.4fr_1.2fr_1fr_1.2fr_0.8fr_56px] px-6 py-3 border-b border-outline-variant/30 items-center">
+          {["Description", "Category", "Amount", "Split Type", "ID", "Action"].map((h, index) => (
+            <span
+              key={h}
+              className={`text-[10px] font-bold uppercase tracking-widest text-outline whitespace-nowrap ${
+                index === 5 ? "text-center" : ""
+              }`}
+            >
               {h}
             </span>
           ))}
@@ -115,14 +130,14 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
           <div className="text-center py-12 text-outline text-sm">No expenses yet</div>
         ) : (
           filtered.map((expense, i) => {
-            const categoryType = inferCategoryType(expense.title);
+            const categoryType = ((expense.category || "other").toLowerCase() as keyof typeof CATEGORY_STYLES);
             const style = CATEGORY_STYLES[categoryType] ?? CATEGORY_STYLES.other;
             const splitStyle = SPLIT_DISPLAY[expense.split_type] ?? SPLIT_DISPLAY.equal;
             const amount = Number(expense.total_amount || 0);
             return (
               <div
                 key={expense.id}
-                className={`grid grid-cols-[2fr_1fr_1.5fr_1fr_auto] px-6 py-4 items-center hover:bg-surface-container-low transition-colors ${
+                className={`grid grid-cols-[2fr_1fr_1fr_1.5fr_1fr_auto] px-6 py-4 items-center hover:bg-surface-container-low transition-colors ${
                   i !== filtered.length - 1 ? "border-b border-outline-variant/20" : ""
                 }`}
               >
@@ -141,6 +156,10 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
                   </div>
                 </div>
 
+                <span className={`inline-flex text-xs font-bold px-3 py-1.5 rounded-full w-fit ${style.bg} ${style.text}`}>
+                  {expense.category || "Uncategorized"}
+                </span>
+
                 <span className="text-base font-extrabold text-on-surface">
                   ${amount.toFixed(2)}
                 </span>
@@ -151,12 +170,14 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
 
                 <span className="text-xs text-outline">#{expense.id}</span>
 
-                <button
-                  onClick={() => setEditingExpense({ ...expense })}
-                  className="p-2 hover:bg-surface-container rounded-full transition-colors"
-                >
-                  <span className="material-symbols-outlined text-outline text-base">edit</span>
-                </button>
+                <div className="flex justify-center">
+                  <button
+                    onClick={() => setEditingExpense({ ...expense })}
+                    className="p-2 hover:bg-surface-container rounded-full transition-colors"
+                  >
+                    <span className="material-symbols-outlined text-outline text-base">edit</span>
+                  </button>
+                </div>
               </div>
             );
           })

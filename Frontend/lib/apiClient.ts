@@ -37,6 +37,7 @@ export interface ExpenseBackend {
   title: string;
   total_amount: number;
   split_type: string; // "equal" | "custom"
+  category: string | null;
 }
 
 export interface ExpenseCreatePayload {
@@ -46,6 +47,7 @@ export interface ExpenseCreatePayload {
   title: string;
   total_amount: number;
   split_type: string;
+  category?: string | null;
 }
 
 export interface ChoreBackend {
