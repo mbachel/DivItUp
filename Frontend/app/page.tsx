@@ -14,8 +14,8 @@ import {
 import { balanceEntries, recentActivities } from "@/lib/mockData";
 
 // TODO: Replace these with actual auth/session values later
-const CURRENT_GROUP_ID = 1;
-const CURRENT_USER_ID = 1;
+const CURRENT_GROUP_ID = 2002;
+const CURRENT_USER_ID = 1002;
 
 type DashboardChoreEntry = {
   timeLabel: string;

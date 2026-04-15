@@ -39,51 +39,61 @@ export default function ReceiptUploader({ onScan, groupId, userId }: ReceiptUplo
   const streamRef = useRef<MediaStream | null>(null);
 
   const scanFile = useCallback(async (file: File) => {
-    setMode("scanning");
-    setErrorMsg("");
-    const form = new FormData();
-    form.append("receipt", file);
-    try {
-      const res = await fetch("/api/scan-receipt", { method: "POST", body: form });
-      if (!res.ok) {
-        const { error } = await res.json();
-        throw new Error(error ?? "Scan failed");
-      }
-      const data: ScannedReceipt = await res.json();
+  setMode("scanning");
+  setErrorMsg("");
 
-      // ============ Create receipt record in backend ============
-      const receiptPayload: api.ReceiptCreatePayload = {
-        group_id: groupId,
-        uploaded_by: userId,
-        image_url: "", // TODO: upload image file and get URL
-        total_extracted: data.totalAmount,
-        status: "processed",
-      };
+  const form = new FormData();
+  form.append("receipt", file);
 
-      const backendReceipt = await api.createReceipt(receiptPayload);
-      if (!backendReceipt) {
-        throw new Error("Failed to create receipt record");
-      }
+  try {
+    const res = await fetch("/api/scan-receipt/", {
+      method: "POST",
+      body: form,
+    });
 
-      // ============ Create receipt items in backend ============
-      for (const lineItem of data.lineItems) {
-        const itemPayload: api.ReceiptItemCreatePayload = {
-          receipt_id: backendReceipt.id,
-          item_name: lineItem.description,
-          quantity: lineItem.quantity,
-          unit_price: lineItem.unitPrice,
-        };
-        await api.createReceiptItem(itemPayload);
-      }
+    const body = await res.json();
 
-      setReceipt(data);
-      setMode("done");
-      onScan?.(data, backendReceipt.id);
-    } catch (err: unknown) {
-      setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
-      setMode("error");
+    if (!res.ok) {
+      const errorMessage =
+        typeof body?.detail === "string"
+          ? body.detail
+          : body?.detail?.message || "Scan failed";
+      throw new Error(errorMessage);
     }
-  }, [onScan, groupId, userId]);
+
+    const data: ScannedReceipt = body;
+
+    const receiptPayload: api.ReceiptCreatePayload = {
+      group_id: groupId,
+      uploaded_by: userId,
+      image_url: "",
+      total_extracted: data.totalAmount,
+      status: "processed",
+    };
+
+    const backendReceipt = await api.createReceipt(receiptPayload);
+    if (!backendReceipt) {
+      throw new Error("Failed to create receipt record");
+    }
+
+    for (const lineItem of data.lineItems) {
+      const itemPayload: api.ReceiptItemCreatePayload = {
+        receipt_id: backendReceipt.id,
+        item_name: lineItem.description,
+        quantity: lineItem.quantity,
+        unit_price: lineItem.unitPrice,
+      };
+      await api.createReceiptItem(itemPayload);
+    }
+
+    setReceipt(data);
+    setMode("done");
+    onScan?.(data, backendReceipt.id);
+  } catch (err: unknown) {
+    setErrorMsg(err instanceof Error ? err.message : "Something went wrong");
+    setMode("error");
+  }
+}, [onScan, groupId, userId]);
 
   const handleFile = (file: File) => {
     if (!file.type.startsWith("image/") && file.type !== "application/pdf") {

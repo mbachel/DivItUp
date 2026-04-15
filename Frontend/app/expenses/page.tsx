@@ -8,7 +8,7 @@ import { useState, useEffect, useCallback } from "react";
 import * as api from "../../lib/apiClient";
 import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
 
-const CURRENT_USER_ID = 1;
+const CURRENT_USER_ID = 1002;
 const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
 
 export default function ExpensesPage() {
@@ -121,12 +121,6 @@ export default function ExpensesPage() {
           <p className="text-outline font-medium max-w-lg">
             Upload a receipt and let our vision engine categorize and split
                 the bill for your household automatically.
-              </p>
-            </div>
-            <div className="hidden md:block text-right">
-              <p className="text-5xl font-extrabold text-secondary">84%</p>
-              <p className="text-[10px] font-bold uppercase tracking-widest text-outline mt-1">
-                Accuracy Rate
               </p>
             </div>
           </div>
