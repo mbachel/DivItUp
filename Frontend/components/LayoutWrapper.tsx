@@ -7,7 +7,6 @@ import TopBar from "@/components/TopBar";
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
 
-  // The login page doesn't use the sidebar/topbar layout
   if (pathname === "/login") {
     return <>{children}</>;
   }
