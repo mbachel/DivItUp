@@ -1,12 +1,9 @@
 "use client";
 
-import SideNav from "../../components/SideNav";
-import BottomNav from "../../components/BottomNav";
 import ReceiptUploader from "../../components/expenses/ReceiptUploader";
 import ManualEntryForm from "../../components/expenses/ManualEntryForm";
 import ExpenseTable from "../../components/expenses/ExpenseTable";
 import type { BackendExpense } from "../../components/expenses/ExpenseTable";
-import TopBar from "../../components/TopBar";
 import { useState, useEffect, useCallback } from "react";
 import * as api from "../../lib/apiClient";
 import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
@@ -115,19 +112,14 @@ export default function ExpensesPage() {
   };
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen">
-      <SideNav />
-      <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
-        <TopBar />
-
-        <div className="p-6 md:p-10 space-y-10">
-          <div className="flex items-start justify-between">
-            <div>
-              <h1 className="text-4xl font-extrabold text-on-surface font-headline tracking-tight mb-2">
-                Receipt Intelligence
-              </h1>
-              <p className="text-outline font-medium max-w-lg">
-                Upload a receipt and let our vision engine categorize and split
+    <>
+      <div className="flex items-start justify-between">
+        <div>
+          <h1 className="text-4xl font-extrabold text-on-surface font-headline tracking-tight mb-2">
+            Receipt Intelligence
+          </h1>
+          <p className="text-outline font-medium max-w-lg">
+            Upload a receipt and let our vision engine categorize and split
                 the bill for your household automatically.
               </p>
             </div>
@@ -159,9 +151,6 @@ export default function ExpensesPage() {
           ) : (
             <ExpenseTable expenses={expenses} onRefresh={loadExpenses} />
           )}
-        </div>
-      </main>
-      <BottomNav />
-    </div>
+    </>
   );
 }
