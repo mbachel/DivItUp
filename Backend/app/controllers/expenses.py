@@ -10,7 +10,8 @@ def create(db: Session, request):
         receipt_id=request.receipt_id,
         title=request.title,
         total_amount=request.total_amount,
-        split_type=request.split_type
+        split_type=request.split_type,
+        category=request.category
     )
     try:
         db.add(new_expense)

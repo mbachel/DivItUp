@@ -9,6 +9,7 @@ class ExpenseBase(BaseModel):
     title: str
     total_amount: Decimal
     split_type: str
+    category: str = "other"
 
 class ExpenseCreate(ExpenseBase):
     pass
@@ -20,6 +21,7 @@ class ExpenseUpdate(BaseModel):
     title: Optional[str] = None
     total_amount: Optional[Decimal] = None
     split_type: Optional[str] = None
+    category: Optional[str] = None
 
 class Expense(ExpenseBase):
     id: int

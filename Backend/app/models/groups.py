@@ -9,6 +9,7 @@ class Groups(Base):
   name = Column(String(100), nullable=False)
   invite_code = Column(String(20),  unique=True, nullable=False, index=True)
   created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
+  streak = Column(Integer, nullable=False, default=0, server_default="0")
 
   members  = relationship("GroupMembers", back_populates="group")
   chores   = relationship("Chores",       back_populates="group")

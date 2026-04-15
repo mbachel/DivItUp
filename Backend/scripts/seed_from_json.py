@@ -96,6 +96,18 @@ def validate_row_shape(table_name, model, row, row_index):
         )
 
 
+def validate_domain_rules(table_name, row, row_index):
+    if table_name == "groups":
+        streak = row.get("streak")
+        if isinstance(streak, bool) or not isinstance(streak, int) or streak < 0:
+            raise ValueError(f"groups[{row_index}].streak must be a non-negative integer.")
+
+    if table_name == "expenses":
+        category = row.get("category")
+        if not isinstance(category, str) or not category.strip():
+            raise ValueError(f"expenses[{row_index}].category must be a non-empty string.")
+
+
 def parse_column_value(column, value):
     if value is None:
         return None
@@ -123,6 +135,7 @@ def upsert_table_rows(db, table_name, model, rows):
 
     for row_index, row in enumerate(rows):
         validate_row_shape(table_name, model, row, row_index)
+        validate_domain_rules(table_name, row, row_index)
 
         parsed_row = {
             column_name: parse_column_value(column, row[column_name])

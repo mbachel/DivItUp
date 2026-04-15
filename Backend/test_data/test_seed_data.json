@@ -76,13 +76,15 @@
       "id": 2001,
       "name": "Loft House Model",
       "invite_code": "LOFT26MODEL",
-      "created_by": 1001
+      "created_by": 1001,
+      "streak": 9
     },
     {
       "id": 2002,
       "name": "Maple House Model",
       "invite_code": "MAPLE26MOD",
-      "created_by": 1002
+      "created_by": 1002,
+      "streak": 4
     }
   ],
   "group_members": [
@@ -372,7 +374,8 @@
       "receipt_id": 6001,
       "title": "Weekly groceries",
       "total_amount": 82.5,
-      "split_type": "equal"
+      "split_type": "equal",
+      "category": "groceries"
     },
     {
       "id": 8002,
@@ -381,7 +384,8 @@
       "receipt_id": null,
       "title": "Cleaning supplies",
       "total_amount": 24.0,
-      "split_type": "equal"
+      "split_type": "equal",
+      "category": "utilities"
     },
     {
       "id": 8003,
@@ -390,7 +394,8 @@
       "receipt_id": 6002,
       "title": "Maple weekly groceries",
       "total_amount": 64.8,
-      "split_type": "equal"
+      "split_type": "equal",
+      "category": "groceries"
     },
     {
       "id": 8004,
@@ -399,7 +404,8 @@
       "receipt_id": 6003,
       "title": "Bathroom and kitchen supplies",
       "total_amount": 18.2,
-      "split_type": "equal"
+      "split_type": "equal",
+      "category": "utilities"
     },
     {
       "id": 8005,
@@ -408,7 +414,8 @@
       "receipt_id": null,
       "title": "Shared streaming subscription",
       "total_amount": 45.0,
-      "split_type": "custom"
+      "split_type": "custom",
+      "category": "subscription"
     }
   ],
   "expense_splits": [
