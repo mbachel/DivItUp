@@ -7,7 +7,7 @@ interface ChoreColumnProps {
   taskCount: number;
   chores: Chore[];
   accentColor?: string;
-  onComplete?: (id: string) => void;
+  onComplete?: (id: string) => Promise<void>;
 }
 
 const ACCENT_COLORS: Record<string, string> = {

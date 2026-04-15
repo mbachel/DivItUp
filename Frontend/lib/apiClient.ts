@@ -319,6 +319,33 @@ export async function fetchChoreAssignments(): Promise<ChoreAssignmentBackend[]>
   return await res.json();
 }
 
+export async function updateChoreAssignment(
+  assignmentId: number,
+  status: string
+): Promise<ChoreAssignmentBackend | null> {
+  try {
+    const res = await fetch(`/api/chore-assignments/${assignmentId}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify({
+        status,
+        completed_at: status === "completed" ? new Date().toISOString() : null,
+      }),
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Update chore assignment failed: ${res.status} ${res.statusText}`
+      );
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error updating chore assignment:", err);
+    return null;
+  }
+}
+
 // ============ Receipts & Receipt Items API ============
 
 export async function createReceipt(

@@ -15,21 +15,22 @@ export interface Chore {
 
 interface ChoreCardProps {
   chore: Chore;
-  onComplete?: (id: string) => void;
+  onComplete?: (id: string) => Promise<void>;
 }
 
 export default function ChoreCard({ chore, onComplete }: ChoreCardProps) {
   const [completing, setCompleting] = useState(false);
   const [done, setDone] = useState(chore.status === "complete");
 
-  const handleComplete = () => {
+  const handleComplete = async () => {
     if (done) return;
     setCompleting(true);
-    setTimeout(() => {
+    try {
+      await onComplete?.(chore.id);
       setDone(true);
+    } finally {
       setCompleting(false);
-      onComplete?.(chore.id);
-    }, 800);
+    }
   };
   {/* Adding Comments for Clarity */}
   return (
