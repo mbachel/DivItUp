@@ -41,6 +41,34 @@
       "email": "soumil.model.seed@divitup.test",
       "password_hash": "fake_hash_soumil",
       "full_name": "Soumil Kothari"
+    },
+    {
+      "id": 1007,
+      "username": "emery_model_seed",
+      "email": "emery.model.seed@divitup.test",
+      "password_hash": "fake_hash_emery",
+      "full_name": "Emery Brooks"
+    },
+    {
+      "id": 1008,
+      "username": "frankie_model_seed",
+      "email": "frankie.model.seed@divitup.test",
+      "password_hash": "fake_hash_frankie",
+      "full_name": "Frankie Cole"
+    },
+    {
+      "id": 1009,
+      "username": "jordan_model_seed",
+      "email": "jordan.model.seed@divitup.test",
+      "password_hash": "fake_hash_jordan",
+      "full_name": "Jordan Kim"
+    },
+    {
+      "id": 1010,
+      "username": "taylor_model_seed",
+      "email": "taylor.model.seed@divitup.test",
+      "password_hash": "fake_hash_taylor",
+      "full_name": "Taylor Green"
     }
   ],
   "groups": [
@@ -49,6 +77,12 @@
       "name": "Loft House Model",
       "invite_code": "LOFT26MODEL",
       "created_by": 1001
+    },
+    {
+      "id": 2002,
+      "name": "Maple House Model",
+      "invite_code": "MAPLE26MOD",
+      "created_by": 1002
     }
   ],
   "group_members": [
@@ -93,6 +127,41 @@
       "user_id": 1006,
       "role": "member",
       "is_restricted": false
+    },
+    {
+      "id": 3007,
+      "group_id": 2002,
+      "user_id": 1002,
+      "role": "admin",
+      "is_restricted": false
+    },
+    {
+      "id": 3008,
+      "group_id": 2002,
+      "user_id": 1007,
+      "role": "member",
+      "is_restricted": false
+    },
+    {
+      "id": 3009,
+      "group_id": 2002,
+      "user_id": 1008,
+      "role": "member",
+      "is_restricted": false
+    },
+    {
+      "id": 3010,
+      "group_id": 2002,
+      "user_id": 1009,
+      "role": "member",
+      "is_restricted": false
+    },
+    {
+      "id": 3011,
+      "group_id": 2002,
+      "user_id": 1010,
+      "role": "member",
+      "is_restricted": false
     }
   ],
   "chores": [
@@ -113,6 +182,36 @@
       "group_id": 2001,
       "title": "Bathroom deep clean",
       "frequency": "monthly"
+    },
+    {
+      "id": 4004,
+      "group_id": 2002,
+      "title": "Vacuum living room",
+      "frequency": "weekly"
+    },
+    {
+      "id": 4005,
+      "group_id": 2002,
+      "title": "Clean fridge shelves",
+      "frequency": "monthly"
+    },
+    {
+      "id": 4006,
+      "group_id": 2002,
+      "title": "Wipe kitchen counters",
+      "frequency": "daily"
+    },
+    {
+      "id": 4007,
+      "group_id": 2002,
+      "title": "Restock bathroom supplies",
+      "frequency": "weekly"
+    },
+    {
+      "id": 4008,
+      "group_id": 2002,
+      "title": "Mop hallway",
+      "frequency": "weekly"
     }
   ],
   "chore_assignments": [
@@ -139,6 +238,46 @@
       "due_date": "2026-04-30T11:00:00+00:00",
       "status": "pending",
       "completed_at": null
+    },
+    {
+      "id": 5004,
+      "chore_id": 4004,
+      "assigned_to": 1007,
+      "due_date": "2026-04-19T10:00:00+00:00",
+      "status": "pending",
+      "completed_at": null
+    },
+    {
+      "id": 5005,
+      "chore_id": 4005,
+      "assigned_to": 1008,
+      "due_date": "2026-04-28T18:00:00+00:00",
+      "status": "pending",
+      "completed_at": null
+    },
+    {
+      "id": 5006,
+      "chore_id": 4006,
+      "assigned_to": 1009,
+      "due_date": "2026-04-15T07:30:00+00:00",
+      "status": "completed",
+      "completed_at": "2026-04-15T08:10:00+00:00"
+    },
+    {
+      "id": 5007,
+      "chore_id": 4007,
+      "assigned_to": 1010,
+      "due_date": "2026-04-18T16:00:00+00:00",
+      "status": "pending",
+      "completed_at": null
+    },
+    {
+      "id": 5008,
+      "chore_id": 4008,
+      "assigned_to": 1002,
+      "due_date": "2026-04-12T12:00:00+00:00",
+      "status": "overdue",
+      "completed_at": null
     }
   ],
   "receipts": [
@@ -148,6 +287,22 @@
       "uploaded_by": 1001,
       "image_url": "https://example.com/receipts/weekly-groceries-model-001.png",
       "total_extracted": 82.5,
+      "status": "processed"
+    },
+    {
+      "id": 6002,
+      "group_id": 2002,
+      "uploaded_by": 1007,
+      "image_url": "https://example.com/receipts/maple-groceries-model-002.png",
+      "total_extracted": 64.8,
+      "status": "processed"
+    },
+    {
+      "id": 6003,
+      "group_id": 2002,
+      "uploaded_by": 1008,
+      "image_url": "https://example.com/receipts/maple-supplies-model-003.png",
+      "total_extracted": 18.2,
       "status": "processed"
     }
   ],
@@ -172,6 +327,41 @@
       "item_name": "Chicken Breast",
       "quantity": 3,
       "unit_price": 8.35
+    },
+    {
+      "id": 7004,
+      "receipt_id": 6002,
+      "item_name": "Eggs",
+      "quantity": 2,
+      "unit_price": 4.2
+    },
+    {
+      "id": 7005,
+      "receipt_id": 6002,
+      "item_name": "Pasta",
+      "quantity": 4,
+      "unit_price": 2.75
+    },
+    {
+      "id": 7006,
+      "receipt_id": 6002,
+      "item_name": "Tomatoes",
+      "quantity": 6,
+      "unit_price": 1.35
+    },
+    {
+      "id": 7007,
+      "receipt_id": 6003,
+      "item_name": "Toilet Paper",
+      "quantity": 2,
+      "unit_price": 6.5
+    },
+    {
+      "id": 7008,
+      "receipt_id": 6003,
+      "item_name": "Dish Soap",
+      "quantity": 1,
+      "unit_price": 5.2
     }
   ],
   "expenses": [
@@ -192,6 +382,33 @@
       "title": "Cleaning supplies",
       "total_amount": 24.0,
       "split_type": "equal"
+    },
+    {
+      "id": 8003,
+      "group_id": 2002,
+      "paid_by": 1007,
+      "receipt_id": 6002,
+      "title": "Maple weekly groceries",
+      "total_amount": 64.8,
+      "split_type": "equal"
+    },
+    {
+      "id": 8004,
+      "group_id": 2002,
+      "paid_by": 1008,
+      "receipt_id": 6003,
+      "title": "Bathroom and kitchen supplies",
+      "total_amount": 18.2,
+      "split_type": "equal"
+    },
+    {
+      "id": 8005,
+      "group_id": 2002,
+      "paid_by": 1002,
+      "receipt_id": null,
+      "title": "Shared streaming subscription",
+      "total_amount": 45.0,
+      "split_type": "custom"
     }
   ],
   "expense_splits": [
@@ -236,6 +453,69 @@
       "user_id": 1004,
       "amount_owed": 8.0,
       "is_settled": false
+    },
+    {
+      "id": 9007,
+      "expense_id": 8003,
+      "user_id": 1008,
+      "amount_owed": 21.6,
+      "is_settled": false
+    },
+    {
+      "id": 9008,
+      "expense_id": 8003,
+      "user_id": 1009,
+      "amount_owed": 21.6,
+      "is_settled": true
+    },
+    {
+      "id": 9009,
+      "expense_id": 8003,
+      "user_id": 1010,
+      "amount_owed": 21.6,
+      "is_settled": false
+    },
+    {
+      "id": 9010,
+      "expense_id": 8004,
+      "user_id": 1002,
+      "amount_owed": 6.07,
+      "is_settled": false
+    },
+    {
+      "id": 9011,
+      "expense_id": 8004,
+      "user_id": 1007,
+      "amount_owed": 6.07,
+      "is_settled": true
+    },
+    {
+      "id": 9012,
+      "expense_id": 8004,
+      "user_id": 1009,
+      "amount_owed": 6.06,
+      "is_settled": false
+    },
+    {
+      "id": 9013,
+      "expense_id": 8005,
+      "user_id": 1007,
+      "amount_owed": 15.0,
+      "is_settled": true
+    },
+    {
+      "id": 9014,
+      "expense_id": 8005,
+      "user_id": 1008,
+      "amount_owed": 15.0,
+      "is_settled": false
+    },
+    {
+      "id": 9015,
+      "expense_id": 8005,
+      "user_id": 1009,
+      "amount_owed": 15.0,
+      "is_settled": false
     }
   ],
   "payments": [
@@ -254,6 +534,30 @@
       "expense_split_id": 9005,
       "amount": 8.0,
       "paid_at": "2026-04-13T12:00:00+00:00"
+    },
+    {
+      "id": 10003,
+      "payer_id": 1009,
+      "payee_id": 1007,
+      "expense_split_id": 9008,
+      "amount": 21.6,
+      "paid_at": "2026-04-11T17:10:00+00:00"
+    },
+    {
+      "id": 10004,
+      "payer_id": 1007,
+      "payee_id": 1008,
+      "expense_split_id": 9011,
+      "amount": 6.07,
+      "paid_at": "2026-04-13T21:40:00+00:00"
+    },
+    {
+      "id": 10005,
+      "payer_id": 1007,
+      "payee_id": 1002,
+      "expense_split_id": 9013,
+      "amount": 15.0,
+      "paid_at": "2026-04-14T09:00:00+00:00"
     }
   ]
 }
