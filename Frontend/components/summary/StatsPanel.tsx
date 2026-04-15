@@ -1,5 +1,7 @@
 "use client";
 
+import { FaFire } from "react-icons/fa";
+
 interface StatsPanelProps {
   totalExpenses: number;
   choresDoneOnTime: number;
@@ -26,23 +28,22 @@ export default function StatsPanel({ totalExpenses, choresDoneOnTime }: StatsPan
         <p className="text-sm text-white/70 font-medium">Total Shared Expenses</p>
       </div>
 
-      {/* Live chores on time */}
+      {/* Current streak */}
       <div className="bg-tertiary-fixed rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center">
-            <span className="material-symbols-outlined text-on-tertiary-fixed text-xl"
-              style={{ fontVariationSettings: "'FILL' 1" }}>
-              task_alt
-            </span>
+            <FaFire className="text-on-tertiary-fixed" />
           </div>
           <span className="text-xs font-bold bg-white/50 text-on-tertiary-fixed px-3 py-1 rounded-full uppercase tracking-wider">
-            Live Streak
+            Current Streak
           </span>
         </div>
         <p className="text-5xl font-extrabold text-on-tertiary-fixed font-headline mb-1">
           {choresDoneOnTime}
         </p>
-        <p className="text-sm text-on-tertiary-fixed/70 font-medium">Chores Completed on Time</p>
+        <p className="text-sm text-on-tertiary-fixed/70 font-medium">
+          Days Straight of Chore Completion
+        </p>
       </div>
     </div>
   );
