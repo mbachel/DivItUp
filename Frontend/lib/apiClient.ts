@@ -13,6 +13,22 @@ export interface GroupBackend {
   streak?: number;
 }
 
+export interface GroupMemberBackend {
+  id: number;
+  group_id: number;
+  user_id: number;
+  role: string;
+  is_restricted: boolean;
+}
+
+export interface UserBackend {
+  id: number;
+  username: string;
+  email: string;
+  password_hash: string;
+  full_name: string;
+}
+
 export interface ExpenseBackend {
   id: number;
   group_id: number;
@@ -43,6 +59,15 @@ export interface ChoreCreatePayload {
   group_id: number;
   title: string;
   frequency: string;
+}
+
+export interface ChoreAssignmentBackend {
+  id: number;
+  chore_id: number;
+  assigned_to: number;
+  due_date: string;
+  status: string;
+  completed_at: string | null;
 }
 
 export interface ReceiptBackend {
@@ -99,6 +124,34 @@ export async function fetchGroupByInviteCode(
   return groups.find((group) => group.invite_code === inviteCode) ?? null;
 }
 
+export async function fetchGroupMembers(): Promise<GroupMemberBackend[]> {
+  const res = await fetch(`/api/group-members`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `Fetch group members failed: ${res.status} ${res.statusText}`
+    );
+  }
+
+  return await res.json();
+}
+
+export async function fetchUsers(): Promise<UserBackend[]> {
+  const res = await fetch(`/api/users`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fetch users failed: ${res.status} ${res.statusText}`);
+  }
+
+  return await res.json();
+}
+
 // ============ Expenses API ============
 
 export async function fetchExpenses(groupId: number): Promise<ExpenseBackend[]> {
@@ -123,7 +176,11 @@ export async function createExpense(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Create expense failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(`Create expense failed: ${res.status} ${res.statusText}`);
+    }
+
     return await res.json();
   } catch (err) {
     console.error("Error creating expense:", err);
@@ -141,7 +198,11 @@ export async function updateExpense(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Update expense failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(`Update expense failed: ${res.status} ${res.statusText}`);
+    }
+
     return await res.json();
   } catch (err) {
     console.error("Error updating expense:", err);
@@ -154,7 +215,11 @@ export async function deleteExpense(id: number): Promise<boolean> {
     const res = await fetch(`/api/expenses/${id}`, {
       method: "DELETE",
     });
-    if (!res.ok) throw new Error(`Delete expense failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(`Delete expense failed: ${res.status} ${res.statusText}`);
+    }
+
     return true;
   } catch (err) {
     console.error("Error deleting expense:", err);
@@ -186,7 +251,11 @@ export async function createChore(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Create chore failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(`Create chore failed: ${res.status} ${res.statusText}`);
+    }
+
     return await res.json();
   } catch (err) {
     console.error("Error creating chore:", err);
@@ -204,7 +273,11 @@ export async function updateChore(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Update chore failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(`Update chore failed: ${res.status} ${res.statusText}`);
+    }
+
     return await res.json();
   } catch (err) {
     console.error("Error updating chore:", err);
@@ -217,12 +290,31 @@ export async function deleteChore(id: number): Promise<boolean> {
     const res = await fetch(`/api/chores/${id}`, {
       method: "DELETE",
     });
-    if (!res.ok) throw new Error(`Delete chore failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(`Delete chore failed: ${res.status} ${res.statusText}`);
+    }
+
     return true;
   } catch (err) {
     console.error("Error deleting chore:", err);
     return false;
   }
+}
+
+export async function fetchChoreAssignments(): Promise<ChoreAssignmentBackend[]> {
+  const res = await fetch(`/api/chore-assignments`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `Fetch chore assignments failed: ${res.status} ${res.statusText}`
+    );
+  }
+
+  return await res.json();
 }
 
 // ============ Receipts & Receipt Items API ============
@@ -236,7 +328,11 @@ export async function createReceipt(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Create receipt failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(`Create receipt failed: ${res.status} ${res.statusText}`);
+    }
+
     return await res.json();
   } catch (err) {
     console.error("Error creating receipt:", err);
@@ -253,7 +349,13 @@ export async function createReceiptItem(
       headers: { "Content-Type": "application/json" },
       body: JSON.stringify(payload),
     });
-    if (!res.ok) throw new Error(`Create receipt item failed: ${res.statusText}`);
+
+    if (!res.ok) {
+      throw new Error(
+        `Create receipt item failed: ${res.status} ${res.statusText}`
+      );
+    }
+
     return await res.json();
   } catch (err) {
     console.error("Error creating receipt item:", err);
