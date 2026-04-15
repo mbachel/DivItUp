@@ -10,6 +10,7 @@ export interface GroupBackend {
   name: string;
   invite_code: string;
   created_by: number;
+  streak?: number;
 }
 
 export interface ExpenseBackend {

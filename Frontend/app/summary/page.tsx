@@ -69,16 +69,20 @@ const UTILITIES: Utility[] = [
 
 export default function SummaryPage() {
   const [totalExpenses, setTotalExpenses] = useState(0);
+  const [currentStreak, setCurrentStreak] = useState(0);
 
-  const loadTotalExpenses = useCallback(async () => {
+  const loadSummaryData = useCallback(async () => {
     try {
       const group = await api.fetchGroupByInviteCode(CURRENT_GROUP_INVITE_CODE);
 
       if (!group) {
         console.error(`Group with invite code ${CURRENT_GROUP_INVITE_CODE} not found`);
         setTotalExpenses(0);
+        setCurrentStreak(0);
         return;
       }
+
+      setCurrentStreak(Number(group.streak ?? 0));
 
       const expenses = await api.fetchExpenses(group.id);
 
@@ -88,14 +92,15 @@ export default function SummaryPage() {
 
       setTotalExpenses(summedTotal);
     } catch (error) {
-      console.error("Failed to load total shared expenses:", error);
+      console.error("Failed to load summary data:", error);
       setTotalExpenses(0);
+      setCurrentStreak(0);
     }
   }, []);
 
   useEffect(() => {
-    loadTotalExpenses();
-  }, [loadTotalExpenses]);
+    loadSummaryData();
+  }, [loadSummaryData]);
 
   return (
     <>
@@ -108,7 +113,7 @@ export default function SummaryPage() {
         />
         <StatsPanel
           totalExpenses={totalExpenses}
-          choresDoneOnTime={42}
+          choresDoneOnTime={currentStreak}
         />
       </div>
 
