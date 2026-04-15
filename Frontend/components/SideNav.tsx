@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
+import { CiLogin } from "react-icons/ci";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
@@ -44,13 +45,13 @@ export default function SideNav() {
         })}
       </nav>
 
-      {/* Login button */}
       <div className="px-4 mt-auto pb-2">
         <Link
           href="/login"
           className="w-full py-3 border border-outline-variant text-outline rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-surface-container hover:text-on-surface transition-all"
         >
-          <span className="material-symbols-outlined text-base">login</span>
+
+          <CiLogin className="text-lg" />
           Log In
         </Link>
       </div>
