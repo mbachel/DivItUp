@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import "./globals.css";
+import LayoutWrapper from "@/components/LayoutWrapper";
 
 export const metadata: Metadata = {
   title: "DivItUp - Household Management Dashboard",
@@ -19,7 +20,11 @@ export default function RootLayout({
           href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined"
         />
       </head>
-      <body>{children}</body>
+      <body>
+        <LayoutWrapper>
+          {children}
+        </LayoutWrapper>
+      </body>
     </html>
   );
 }

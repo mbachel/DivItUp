@@ -1,8 +1,5 @@
 "use client";
 
-import TopBar from "../../components/TopBar";
-import SideNav from "../../components/SideNav";
-import BottomNav from "../../components/BottomNav";
 import RotationAlert from "../../components/chores/RotationAlert";
 import StreakCard from "../../components/chores/StreakCard";
 import ChoreColumn from "../../components/chores/ChoreColumn";
@@ -82,45 +79,33 @@ export default function ChoresPage() {
 
   if (loading) {
     return (
-      <div className="bg-surface text-on-surface min-h-screen">
-        <SideNav />
-        <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
-          <TopBar />
-          <div className="p-6 md:p-8 text-center text-outline">
-            Loading chores...
-          </div>
-        </main>
-        <BottomNav />
+      <div className="text-center text-outline">
+        Loading chores...
       </div>
     );
   }
 
   return (
-    <div className="bg-surface text-on-surface min-h-screen">
-      <SideNav />
-      <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
-        <TopBar />
+    <>
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
+          {error}
+        </div>
+      )}
 
-        <div className="p-6 md:p-8 space-y-8">
-          {error && (
-            <div className="bg-red-50 border border-red-200 text-red-700 px-4 py-3 rounded-lg text-sm">
-              {error}
-            </div>
-          )}
+      <div className="flex gap-5 items-stretch">
+        <RotationAlert
+          nextPerson="Emma"
+          nextChore="Dishwasher"
+          rotationDay="Monday"
+          rotationTime="8:00 AM"
+        />
+        <StreakCard streakDays={14} cycle={4} totalCycles={12} />
+      </div>
 
-          <div className="flex gap-5 items-stretch">
-            <RotationAlert
-              nextPerson="Emma"
-              nextChore="Dishwasher"
-              rotationDay="Monday"
-              rotationTime="8:00 AM"
-            />
-            <StreakCard streakDays={14} cycle={4} totalCycles={12} />
-          </div>
-
-          <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_280px] gap-6 items-start">
-            <ChoreColumn
-              title="Daily"
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_280px] gap-6 items-start">
+        <ChoreColumn
+          title="Daily"
               taskCount={dailyChores.length}
               chores={dailyChores}
             />
@@ -151,11 +136,7 @@ export default function ChoresPage() {
                 totalDays={7}
               />
             </div>
-          </div>
-        </div>
-      </main>
-
-      <BottomNav />
-    </div>
+      </div>
+    </>
   );
 }

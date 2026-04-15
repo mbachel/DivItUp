@@ -1,8 +1,5 @@
 "use client";
 
-import TopBar from "@/components/TopBar";
-import SideNav from "../../components/SideNav";
-import BottomNav from "../../components/BottomNav";
 import HouseHarmonyCard from "../../components/summary/HouseHarmonyCard";
 import StatsPanel from "../../components/summary/StatsPanel";
 import HearthLeaders from "../../components/summary/Leaders";
@@ -48,41 +45,28 @@ const UTILITIES: Utility[] = [
 
 export default function SummaryPage() {
   return (
-    <div className="bg-surface text-on-surface min-h-screen">
-      <SideNav />
+    <>
+      {/* Top row: harmony card + stats panel */}
+      <div className="flex gap-5 items-stretch">
+        <HouseHarmonyCard
+          score={85}
+          percentChange={12}
+          metrics={HARMONY_METRICS}
+        />
+        <StatsPanel
+          totalExpenses={2480.00}
+          choresDoneOnTime={42}
+        />
+      </div>
 
-      <main className="md:ml-64 min-h-screen pb-24 md:pb-0">
-        {/* Top bar */}
-        <TopBar />
-
-        <div className="p-6 md:p-8 space-y-8">
-
-          {/* Top row: harmony card + stats panel */}
-          <div className="flex gap-5 items-stretch">
-            <HouseHarmonyCard
-              score={85}
-              percentChange={12}
-              metrics={HARMONY_METRICS}
-            />
-            <StatsPanel
-              totalExpenses={2480.00}
-              choresDoneOnTime={42}
-            />
-          </div>
-
-          {/* Bottom row: leaders + utilities */}
-          <div className="flex gap-6 items-start">
-            <HearthLeaders
-              leaders={LEADERS}
-              onViewHistory={() => console.log("View history")}
-            />
-            <UtilitiesTracker utilities={UTILITIES} />
-          </div>
-
-        </div>
-      </main>
-
-      <BottomNav />
-    </div>
+      {/* Bottom row: leaders + utilities */}
+      <div className="flex gap-6 items-start">
+        <HearthLeaders
+          leaders={LEADERS}
+          onViewHistory={() => console.log("View history")}
+        />
+        <UtilitiesTracker utilities={UTILITIES} />
+      </div>
+    </>
   );
 }
