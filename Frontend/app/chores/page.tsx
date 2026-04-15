@@ -3,7 +3,6 @@
 import RotationAlert from "../../components/chores/RotationAlert";
 import StreakCard from "../../components/chores/StreakCard";
 import ChoreColumn from "../../components/chores/ChoreColumn";
-import EpicTaskCard from "../../components/chores/EpicTaskCard";
 import GroupGoalCard from "../../components/chores/GroupGoalCard";
 import { useState, useEffect } from "react";
 import * as api from "../../lib/apiClient";
@@ -123,13 +122,6 @@ export default function ChoresPage() {
             />
 
             <div className="flex flex-col gap-4">
-              <EpicTaskCard
-                title="Deep Clean Kitchen Appliances"
-                value={850}
-                participants={["Me", "Sarah", "Alex"]}
-                extraCount={2}
-                onJoin={() => console.log("Joined epic task")}
-              />
               <GroupGoalCard
                 goalName="Perfect Week"
                 daysComplete={6}
