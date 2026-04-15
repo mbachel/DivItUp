@@ -12,11 +12,7 @@ import * as api from "../../lib/apiClient";
 import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
 
 const CURRENT_USER_ID = 1;
-<<<<<<< Updated upstream
-const CURRENT_GROUP_INVITE_CODE = "LOFT2026A";
-=======
 const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
->>>>>>> Stashed changes
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<BackendExpense[]>([]);
