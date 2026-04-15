@@ -3,7 +3,6 @@
 import { usePathname } from "next/navigation";
 import SideNav from "@/components/SideNav";
 import TopBar from "@/components/TopBar";
-import BottomNav from "@/components/BottomNav";
 
 export default function LayoutWrapper({ children }: { children: React.ReactNode }) {
   const pathname = usePathname();
@@ -22,7 +21,6 @@ export default function LayoutWrapper({ children }: { children: React.ReactNode 
           {children}
         </div>
       </main>
-      <BottomNav />
     </div>
   );
 }
