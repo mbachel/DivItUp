@@ -7,7 +7,8 @@ def create(db: Session, request):
     new_group = model.Groups(
         name=request.name,
         invite_code=request.invite_code,
-        created_by=request.created_by
+        created_by=request.created_by,
+        streak=request.streak
     )
     try:
         db.add(new_group)

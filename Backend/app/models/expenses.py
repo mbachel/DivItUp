@@ -19,6 +19,7 @@ class Expenses(Base):
   title = Column(String(200), nullable=False)
   total_amount = Column(DECIMAL(10, 2), nullable=False)
   split_type = Column(Enum(SplitType), nullable=False)
+  category = Column(String(50), nullable=False, default="other", server_default="other")
 
   group        = relationship("Groups",       back_populates="expenses")
   paid_by_user = relationship("Users",        back_populates="expenses_paid")
