@@ -1,33 +1,29 @@
 "use client";
 
 interface RotationAlertProps {
-  nextPerson: string;
-  nextChore: string;
-  rotationDay: string;
-  rotationTime: string;
+  choreTitle: string;
+  dueText: string;
+  assigneeName?: string;
 }
 
 export default function RotationAlert({
-  nextPerson,
-  nextChore,
-  rotationDay,
-  rotationTime,
+  choreTitle,
+  dueText,
+  assigneeName,
 }: RotationAlertProps) {
   return (
     <div className="bg-white rounded-2xl p-8 border border-outline-variant/40 flex-1">
       <p className="text-[10px] font-bold uppercase tracking-widest text-outline mb-3">
-        Rotation Alert
+        Next Upcoming Chore
       </p>
+
       <h2 className="text-3xl font-extrabold text-on-surface font-headline mb-3">
-        Next Week:{" "}
-        <span className="text-secondary">{nextPerson}</span>{" "}
-        rotates to{" "}
-        <span className="text-primary">{nextChore}</span>
+        <span className="text-primary">{choreTitle}</span>
       </h2>
+
       <p className="text-outline font-medium">
-        The household wheel turns every {rotationDay} at {rotationTime}.
-        <br />
-        Prepare to swap roles!
+        {assigneeName ? `Assigned to ${assigneeName}. ` : ""}
+        {dueText}
       </p>
     </div>
   );

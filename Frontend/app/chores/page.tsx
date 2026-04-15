@@ -1,6 +1,6 @@
 "use client";
 
-import RotationAlert from "../../components/chores/RotationAlert";
+import RotationAlert from "../../components/chores/NextChoreAlert";
 import StreakCard from "../../components/chores/StreakCard";
 import ChoreColumn from "../../components/chores/ChoreColumn";
 import GroupGoalCard from "../../components/chores/GroupGoalCard";
@@ -9,12 +9,8 @@ import * as api from "../../lib/apiClient";
 import type { Chore } from "../../components/chores/ChoreCard";
 
 const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
+const CURRENT_USER_ID = 1002;
 
-/**
- * Convert backend ChoreBackend to UI Chore type.
- * Backend provides: id, group_id, title, frequency
- * UI needs: id, title, points, dueLabel, assignee, status, (optional: daysLeft)
- */
 function mapBackendChoreToUI(backendChore: api.ChoreBackend): Chore {
   const pointsMap: Record<string, number> = {
     daily: 50,
@@ -39,10 +35,47 @@ function mapBackendChoreToUI(backendChore: api.ChoreBackend): Chore {
   };
 }
 
+function formatDueText(dueDate: string): string {
+  const due = new Date(dueDate);
+  const now = new Date();
+
+  const isPast = due.getTime() < now.getTime();
+
+  const timeText = due.toLocaleTimeString([], {
+    hour: "numeric",
+    minute: "2-digit",
+  });
+
+  const dateText = due.toLocaleDateString([], {
+    weekday: "long",
+    month: "short",
+    day: "numeric",
+  });
+
+  if (isPast) {
+    return `Overdue since ${dateText} at ${timeText}`;
+  }
+
+  const sameDay = due.toDateString() === now.toDateString();
+
+  const tomorrow = new Date();
+  tomorrow.setDate(now.getDate() + 1);
+  const isTomorrow = due.toDateString() === tomorrow.toDateString();
+
+  if (sameDay) return `Due today at ${timeText}`;
+  if (isTomorrow) return `Due tomorrow at ${timeText}`;
+
+  return `Due ${dateText} at ${timeText}`;
+}
+
 export default function ChoresPage() {
   const [allChores, setAllChores] = useState<Chore[]>([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const [nextChoreTitle, setNextChoreTitle] = useState("No chores assigned");
+  const [nextChoreDueText, setNextChoreDueText] = useState("You're all caught up.");
+  const [nextChoreAssignee, setNextChoreAssignee] = useState("");
 
   useEffect(() => {
     const loadChores = async () => {
@@ -58,12 +91,73 @@ export default function ChoresPage() {
           );
         }
 
-        const data = await api.fetchChores(group.id);
-        const mapped = data.map(mapBackendChoreToUI);
+        const [chores, assignments, groupMembers, users] = await Promise.all([
+          api.fetchChores(group.id),
+          api.fetchChoreAssignments(),
+          api.fetchGroupMembers(),
+          api.fetchUsers(),
+        ]);
+
+        const mapped = chores.map(mapBackendChoreToUI);
         setAllChores(mapped);
+
+        const groupUserIds = new Set(
+          groupMembers
+            .filter((member) => member.group_id === group.id)
+            .map((member) => member.user_id)
+        );
+
+        const groupChoreIds = new Set(
+          chores.map((chore) => Number(chore.id))
+        );
+
+        const userAssignments = assignments
+          .filter((assignment) => groupUserIds.has(assignment.assigned_to))
+          .filter((assignment) => assignment.assigned_to === CURRENT_USER_ID)
+          .filter((assignment) => groupChoreIds.has(Number(assignment.chore_id)))
+          .filter((assignment) => assignment.status.toLowerCase() !== "completed");
+
+        const overdueAssignments = userAssignments
+          .filter((assignment) => new Date(assignment.due_date).getTime() < Date.now())
+          .sort(
+            (a, b) =>
+              new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+          );
+
+        const upcomingAssignments = userAssignments
+          .filter((assignment) => new Date(assignment.due_date).getTime() >= Date.now())
+          .sort(
+            (a, b) =>
+              new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+          );
+
+        const nextAssignment = overdueAssignments[0] ?? upcomingAssignments[0];
+
+        if (nextAssignment) {
+          const matchingChore = chores.find(
+            (chore) => Number(chore.id) === Number(nextAssignment.chore_id)
+          );
+
+          const matchingUser = users.find(
+            (user) => user.id === nextAssignment.assigned_to
+          );
+
+          setNextChoreTitle(matchingChore?.title ?? "Upcoming chore");
+          setNextChoreDueText(formatDueText(nextAssignment.due_date));
+          setNextChoreAssignee(
+            matchingUser?.full_name ?? matchingUser?.username ?? ""
+          );
+        } else {
+          setNextChoreTitle("No chores assigned");
+          setNextChoreDueText("You're all caught up.");
+          setNextChoreAssignee("");
+        }
       } catch (err) {
         setError("Failed to load chores. Please try again.");
         console.error(err);
+        setNextChoreTitle("Unable to load next chore");
+        setNextChoreDueText("Please try refreshing the page.");
+        setNextChoreAssignee("");
       } finally {
         setLoading(false);
       }
@@ -94,10 +188,9 @@ export default function ChoresPage() {
 
       <div className="flex gap-5 items-stretch">
         <RotationAlert
-          nextPerson="Emma"
-          nextChore="Dishwasher"
-          rotationDay="Monday"
-          rotationTime="8:00 AM"
+          choreTitle={nextChoreTitle}
+          dueText={nextChoreDueText}
+          assigneeName={nextChoreAssignee}
         />
         <StreakCard streakDays={14} cycle={4} totalCycles={12} />
       </div>
@@ -105,29 +198,29 @@ export default function ChoresPage() {
       <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_280px] gap-6 items-start">
         <ChoreColumn
           title="Daily"
-              taskCount={dailyChores.length}
-              chores={dailyChores}
-            />
+          taskCount={dailyChores.length}
+          chores={dailyChores}
+        />
 
-            <ChoreColumn
-              title="Weekly"
-              taskCount={weeklyChores.length}
-              chores={weeklyChores}
-            />
+        <ChoreColumn
+          title="Weekly"
+          taskCount={weeklyChores.length}
+          chores={weeklyChores}
+        />
 
-            <ChoreColumn
-              title="Monthly"
-              taskCount={monthlyChores.length}
-              chores={monthlyChores}
-            />
+        <ChoreColumn
+          title="Monthly"
+          taskCount={monthlyChores.length}
+          chores={monthlyChores}
+        />
 
-            <div className="flex flex-col gap-4">
-              <GroupGoalCard
-                goalName="Perfect Week"
-                daysComplete={6}
-                totalDays={7}
-              />
-            </div>
+        <div className="flex flex-col gap-4">
+          <GroupGoalCard
+            goalName="Perfect Week"
+            daysComplete={6}
+            totalDays={7}
+          />
+        </div>
       </div>
     </>
   );
