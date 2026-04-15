@@ -125,22 +125,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Remember me */}
-            <div className="flex items-center gap-3">
-              <button
-                type="button"
-                onClick={() => setRemember(!remember)}
-                className={`w-10 h-6 rounded-full transition-all flex items-center px-1 ${
-                  remember ? "bg-primary" : "bg-outline-variant"
-                }`}
-              >
-                <div className={`w-4 h-4 bg-white rounded-full shadow transition-transform ${
-                  remember ? "translate-x-4" : "translate-x-0"
-                }`} />
-              </button>
-              <span className="text-sm text-outline font-medium">Remember me for 30 days</span>
-            </div>
-
             {/* Submit */}
             <button
               type="submit"
@@ -150,19 +134,11 @@ export default function LoginPage() {
               <span className="material-symbols-outlined text-base">arrow_forward</span>
             </button>
           </form>
-
-          {/* Sign up link */}
-          <p className="text-center text-sm text-outline mt-8">
-            Don&apos;t have an account?{" "}
-            <Link href="/signup" className="font-bold text-primary hover:underline">
-              Join your household
-            </Link>
-          </p>
         </div>
 
         {/* Footer */}
         <p className="text-center text-[10px] text-outline uppercase tracking-widest mt-12">
-          © 2026 DivItUp • Privacy • Terms
+          © 2026 DivItUp
         </p>
       </div>
     </div>
