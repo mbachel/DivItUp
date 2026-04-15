@@ -12,7 +12,7 @@ import { useState, useEffect } from "react";
 import * as api from "../../lib/apiClient";
 import type { Chore } from "../../components/chores/ChoreCard";
 
-const CURRENT_GROUP_INVITE_CODE = "LOFT2026A";
+const CURRENT_GROUP_INVITE_CODE = "LOFT26MODEL";
 
 /**
  * Convert backend ChoreBackend to UI Chore type.
