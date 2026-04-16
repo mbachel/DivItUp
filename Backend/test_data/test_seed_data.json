@@ -77,14 +77,16 @@
       "name": "Loft House Model",
       "invite_code": "LOFT26MODEL",
       "created_by": 1001,
-      "streak": 9
+      "streak": 9,
+      "last_streak_increment_on": "2026-04-15"
     },
     {
       "id": 2002,
       "name": "Maple House Model",
       "invite_code": "MAPLE26MOD",
       "created_by": 1002,
-      "streak": 4
+      "streak": 0,
+      "last_streak_increment_on": null
     }
   ],
   "group_members": [

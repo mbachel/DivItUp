@@ -1,11 +1,11 @@
 import argparse
 import json
 import sys
-from datetime import datetime, timezone
+from datetime import date, datetime, timezone
 from decimal import Decimal
 from pathlib import Path
 
-from sqlalchemy import DateTime, Enum
+from sqlalchemy import Date, DateTime, Enum
 from sqlalchemy.sql.sqltypes import Numeric
 
 PROJECT_ROOT = Path(__file__).resolve().parents[1]
@@ -55,6 +55,12 @@ def to_datetime(value):
     return datetime.fromisoformat(value)
 
 
+def to_date(value):
+    if value is None:
+        return None
+    return date.fromisoformat(value)
+
+
 def normalize_datetime(value):
     if value is None:
         return None
@@ -102,6 +108,19 @@ def validate_domain_rules(table_name, row, row_index):
         if isinstance(streak, bool) or not isinstance(streak, int) or streak < 0:
             raise ValueError(f"groups[{row_index}].streak must be a non-negative integer.")
 
+        last_increment = row.get("last_streak_increment_on")
+        if last_increment is not None:
+            if not isinstance(last_increment, str):
+                raise ValueError(
+                    f"groups[{row_index}].last_streak_increment_on must be an ISO date string or null."
+                )
+            try:
+                to_date(last_increment)
+            except ValueError as e:
+                raise ValueError(
+                    f"groups[{row_index}].last_streak_increment_on must be a valid YYYY-MM-DD date."
+                ) from e
+
     if table_name == "group_members":
         points = row.get("points")
         if isinstance(points, bool) or not isinstance(points, int) or points < 0:
@@ -123,6 +142,9 @@ def parse_column_value(column, value):
 
     if isinstance(column.type, DateTime):
         return normalize_datetime(to_datetime(value))
+
+    if isinstance(column.type, Date):
+        return to_date(value)
 
     if isinstance(column.type, Numeric):
         return to_decimal(value)
