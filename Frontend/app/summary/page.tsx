@@ -10,6 +10,7 @@ import type { Utility } from "../../components/summary/UtilitiesTracker";
 import * as api from "../../lib/apiClient";
 
 const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
+const TRACKED_UTILITY_CATEGORY = "utilities";
 
 const HARMONY_METRICS = [
   { label: "Chore Speed", value: "Fast", color: "#00606e", barColor: "#00606e", barWidth: "80%" },
@@ -18,53 +19,38 @@ const HARMONY_METRICS = [
   { label: "Mood Pulse", value: "Peaceful", color: "#ba1a1a", barColor: "#ba1a1a", barWidth: "55%" },
 ];
 
-const UTILITIES: Utility[] = [
-  {
-    id: "1",
-    name: "Electricity",
-    subtitle: "Due in 4 days",
-    amount: 142.1,
-    trend: 5,
-    icon: "bolt",
-    iconBg: "#dbeafe",
-    iconColor: "#1d4ed8",
-  },
-  {
-    id: "2",
-    name: "Fiber Internet",
-    subtitle: "Paid Auto",
-    amount: 79.99,
-    trend: undefined,
-    icon: "wifi",
-    iconBg: "#ede9fe",
-    iconColor: "#7c3aed",
-  },
-  {
-    id: "3",
-    name: "Water",
-    subtitle: "Monthly avg",
-    amount: 45.3,
-    trend: -12,
-    icon: "water_drop",
-    iconBg: "#dbeafe",
-    iconColor: "#0369a1",
-  },
-  {
-    id: "4",
-    name: "Subs Bundle",
-    subtitle: "Netflix + Spotify",
-    amount: 28.99,
-    trend: undefined,
-    icon: "subscriptions",
-    iconBg: "#fef3c7",
-    iconColor: "#b45309",
-  },
-];
+function formatCategoryName(category: string | null | undefined) {
+  if (!category) return "Utility";
+  return category.charAt(0).toUpperCase() + category.slice(1);
+}
+
+function getUtilityVisual(category: string | null | undefined) {
+  const normalized = (category || "").toLowerCase();
+
+  switch (normalized) {
+    case "water":
+      return {
+        icon: "water_drop",
+        iconBg: "#dbeafe",
+        iconColor: "#0369a1",
+      };
+    case "electricity":
+    case "gas":
+    case "utilities":
+    default:
+      return {
+        icon: "bolt",
+        iconBg: "#dbeafe",
+        iconColor: "#1d4ed8",
+      };
+  }
+}
 
 export default function SummaryPage() {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
   const [leaders, setLeaders] = useState<Leader[]>([]);
+  const [utilities, setUtilities] = useState<Utility[]>([]);
 
   const loadSummaryData = useCallback(async () => {
     try {
@@ -75,6 +61,7 @@ export default function SummaryPage() {
         setTotalExpenses(0);
         setCurrentStreak(0);
         setLeaders([]);
+        setUtilities([]);
         return;
       }
 
@@ -112,11 +99,37 @@ export default function SummaryPage() {
         .sort((a, b) => b.points - a.points);
 
       setLeaders(mappedLeaders);
+
+      const mappedUtilities: Utility[] = expenses
+        .filter(
+          (expense) =>
+            Number(expense.group_id) === Number(group.id) &&
+            String(expense.category || "").toLowerCase() === TRACKED_UTILITY_CATEGORY
+        )
+        .sort((a, b) => Number(b.id) - Number(a.id))
+        .slice(0, 4)
+        .map((expense) => {
+          const visual = getUtilityVisual(expense.category);
+
+          return {
+            id: String(expense.id),
+            name: expense.title || formatCategoryName(expense.category),
+            subtitle: formatCategoryName(expense.category),
+            amount: Number(expense.total_amount ?? 0),
+            trend: undefined,
+            icon: visual.icon,
+            iconBg: visual.iconBg,
+            iconColor: visual.iconColor,
+          };
+        });
+
+      setUtilities(mappedUtilities);
     } catch (error) {
       console.error("Failed to load summary data:", error);
       setTotalExpenses(0);
       setCurrentStreak(0);
       setLeaders([]);
+      setUtilities([]);
     }
   }, []);
 
@@ -126,7 +139,6 @@ export default function SummaryPage() {
 
   return (
     <>
-      {/* Top row: harmony card + stats panel */}
       <div className="flex gap-5 items-stretch">
         <HouseHarmonyCard
           score={85}
@@ -139,12 +151,9 @@ export default function SummaryPage() {
         />
       </div>
 
-      {/* Bottom row: leaders + utilities */}
       <div className="flex gap-6 items-start">
-        <Leaderboard
-          leaders={leaders}
-        />
-        <UtilitiesTracker utilities={UTILITIES} />
+        <Leaderboard leaders={leaders} />
+        <UtilitiesTracker utilities={utilities} />
       </div>
     </>
   );
