@@ -102,6 +102,11 @@ def validate_domain_rules(table_name, row, row_index):
         if isinstance(streak, bool) or not isinstance(streak, int) or streak < 0:
             raise ValueError(f"groups[{row_index}].streak must be a non-negative integer.")
 
+    if table_name == "group_members":
+        points = row.get("points")
+        if isinstance(points, bool) or not isinstance(points, int) or points < 0:
+            raise ValueError(f"group_members[{row_index}].points must be a non-negative integer.")
+
     if table_name == "expenses":
         category = row.get("category")
         if not isinstance(category, str) or not category.strip():

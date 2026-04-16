@@ -8,7 +8,8 @@ def create(db: Session, request):
         group_id=request.group_id,
         user_id=request.user_id,
         role=request.role,
-        is_restricted=request.is_restricted
+        is_restricted=request.is_restricted,
+        points=request.points
     )
     try:
         db.add(new_member)
