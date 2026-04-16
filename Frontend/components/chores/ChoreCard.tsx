@@ -56,7 +56,9 @@ export default function ChoreCard({ chore, onComplete }: ChoreCardProps) {
         </span>
         <span className="text-xs font-semibold text-outline">
           {chore.daysLeft !== undefined
-            ? `${chore.daysLeft} Days Left`
+            ? chore.daysLeft <= 0
+              ? `Overdue by ${Math.abs(chore.daysLeft)} day${Math.abs(chore.daysLeft) === 1 ? "" : "s"}`
+              : `${chore.daysLeft} Days Left`
             : chore.dueLabel}
         </span>
       </div>
