@@ -27,6 +27,7 @@ export interface UserBackend {
   email: string;
   password_hash: string;
   full_name: string;
+  points?: number;
 }
 
 export interface ExpenseBackend {
