@@ -441,6 +441,26 @@
       "total_amount": 45.0,
       "split_type": "custom",
       "category": "subscription"
+    },
+    {
+      "id": 8006,
+      "group_id": 2002,
+      "paid_by": 1007,
+      "receipt_id": null,
+      "title": "Electric bill",
+      "total_amount": 72.45,
+      "split_type": "equal",
+      "category": "utilities"
+    },
+    {
+      "id": 8007,
+      "group_id": 2002,
+      "paid_by": 1009,
+      "receipt_id": null,
+      "title": "Water bill",
+      "total_amount": 38.9,
+      "split_type": "equal",
+      "category": "utilities"
     }
   ],
   "expense_splits": [
