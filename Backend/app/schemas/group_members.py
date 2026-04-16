@@ -6,6 +6,7 @@ class GroupMemberBase(BaseModel):
     user_id: int
     role: str
     is_restricted: bool
+    points: int = 0
 
 class GroupMemberCreate(GroupMemberBase):
     pass
@@ -13,6 +14,7 @@ class GroupMemberCreate(GroupMemberBase):
 class GroupMemberUpdate(BaseModel):
     role: Optional[str] = None
     is_restricted: Optional[bool] = None
+    points: Optional[int] = None
 
 class GroupMember(GroupMemberBase):
     id: int

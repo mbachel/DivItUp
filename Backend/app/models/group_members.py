@@ -17,6 +17,7 @@ class GroupMembers(Base):
   user_id = Column(Integer, ForeignKey("users.id"),  nullable=False, index=True)
   role = Column(Enum(GroupRole), default=GroupRole.member, nullable=False)
   is_restricted = Column(Boolean, default=False)
+  points = Column(Integer, nullable=False, default=0, server_default="0")
 
   group = relationship("Groups", back_populates="members")
   user  = relationship("Users",  back_populates="memberships")
