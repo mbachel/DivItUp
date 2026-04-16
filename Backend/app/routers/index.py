@@ -9,7 +9,8 @@ from . import (
     expenses_splits as expense_splits,
     receipts,
     receipt_items,
-    payments
+    payments,
+    scan_receipt
 )
 
 def load_routes(app: FastAPI):
@@ -24,3 +25,4 @@ def load_routes(app: FastAPI):
     app.include_router(receipts.router, prefix=api_prefix)
     app.include_router(receipt_items.router, prefix=api_prefix)
     app.include_router(payments.router, prefix=api_prefix)
+    app.include_router(scan_receipt.router, prefix=api_prefix)

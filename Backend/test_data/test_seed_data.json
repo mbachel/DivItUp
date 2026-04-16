@@ -214,6 +214,12 @@
       "group_id": 2002,
       "title": "Mop hallway",
       "frequency": "weekly"
+    },
+    {
+      "id": 4009,
+      "group_id": 2002,
+      "title": "Organize pantry",
+      "frequency": "weekly"
     }
   ],
   "chore_assignments": [
@@ -262,8 +268,8 @@
       "chore_id": 4006,
       "assigned_to": 1009,
       "due_date": "2026-04-15T07:30:00+00:00",
-      "status": "completed",
-      "completed_at": "2026-04-15T08:10:00+00:00"
+      "status": "overdue",
+      "completed_at": null
     },
     {
       "id": 5007,
@@ -279,6 +285,14 @@
       "assigned_to": 1002,
       "due_date": "2026-04-12T12:00:00+00:00",
       "status": "overdue",
+      "completed_at": null
+    },
+    {
+      "id": 5009,
+      "chore_id": 4009,
+      "assigned_to": 1002,
+      "due_date": "2026-04-17T14:00:00+00:00",
+      "status": "pending",
       "completed_at": null
     }
   ],

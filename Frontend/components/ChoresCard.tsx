@@ -81,13 +81,6 @@ export default function ChoresCard({ chores, onCompleteTask }: ChoresCardProps) 
           </div>
         ))}
       </div>
-
-      <button
-        onClick={onCompleteTask}
-        className="mt-8 w-full bg-white text-primary font-bold py-3 rounded-full hover:bg-secondary-fixed transition-colors"
-      >
-        Complete Task
-      </button>
     </div>
   );
 }
