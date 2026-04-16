@@ -3,9 +3,9 @@
 import { useCallback, useEffect, useState } from "react";
 import HouseHarmonyCard from "../../components/summary/HouseHarmonyCard";
 import StatsPanel from "../../components/summary/StatsPanel";
-import HearthLeaders from "../../components/summary/Leaders";
+import Leaderboard from "../../components/summary/Leaderboard";
 import UtilitiesTracker from "../../components/summary/UtilitiesTracker";
-import type { Leader } from "../../components/summary/Leaders";
+import type { Leader } from "../../components/summary/Leaderboard";
 import type { Utility } from "../../components/summary/UtilitiesTracker";
 import * as api from "../../lib/apiClient";
 
@@ -119,9 +119,8 @@ export default function SummaryPage() {
 
       {/* Bottom row: leaders + utilities */}
       <div className="flex gap-6 items-start">
-        <HearthLeaders
+        <Leaderboard
           leaders={LEADERS}
-          onViewHistory={() => console.log("View history")}
         />
         <UtilitiesTracker utilities={UTILITIES} />
       </div>

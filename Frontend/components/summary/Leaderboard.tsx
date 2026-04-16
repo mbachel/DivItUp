@@ -10,26 +10,17 @@ export interface Leader {
 
 interface DivItUpLeadersProps {
   leaders: Leader[];
-  onViewHistory?: () => void;
 }
-{/* Adding Comments for Clarity */}
-export default function DivItUpLeaders({ leaders, onViewHistory }: DivItUpLeadersProps) {
+
+export default function Leaderboard({ leaders }: DivItUpLeadersProps) {
   return (
     <div className="flex-1 min-w-0">
-      {/* Header */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-extrabold text-on-surface font-headline">
-          DivItUp Leaders
+          Group Leaderboard
         </h2>
-        <button
-          onClick={onViewHistory}
-          className="text-sm font-bold text-primary hover:underline"
-        >
-          View History
-        </button>
       </div>
 
-      {/* Leader rows */}
       <div className="flex flex-col gap-3">
         {leaders.map((leader, i) => (
           <div
@@ -40,7 +31,6 @@ export default function DivItUpLeaders({ leaders, onViewHistory }: DivItUpLeader
                 : "bg-white border border-outline-variant/40 hover:border-outline-variant"
             }`}
           >
-            {/* Rank + avatar */}
             <div className="flex items-center gap-3">
               <span className={`text-xs font-bold w-4 text-center ${
                 leader.isCurrentUser ? "text-white/60" : "text-outline"
@@ -56,7 +46,6 @@ export default function DivItUpLeaders({ leaders, onViewHistory }: DivItUpLeader
               </div>
             </div>
 
-            {/* Name + subtitle */}
             <div className="flex-1">
               <p className={`font-bold text-sm ${
                 leader.isCurrentUser ? "text-white" : "text-on-surface"
