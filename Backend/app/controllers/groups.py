@@ -8,7 +8,8 @@ def create(db: Session, request):
         name=request.name,
         invite_code=request.invite_code,
         created_by=request.created_by,
-        streak=request.streak
+        streak=request.streak,
+        last_streak_increment_on=request.last_streak_increment_on
     )
     try:
         db.add(new_group)

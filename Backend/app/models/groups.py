@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, ForeignKey
+from sqlalchemy import Column, Integer, String, ForeignKey, Date
 from sqlalchemy.orm import relationship
 from ..dependencies.database import Base
 
@@ -10,6 +10,7 @@ class Groups(Base):
   invite_code = Column(String(20),  unique=True, nullable=False, index=True)
   created_by = Column(Integer, ForeignKey("users.id"), nullable=False)
   streak = Column(Integer, nullable=False, default=0, server_default="0")
+  last_streak_increment_on = Column(Date, nullable=True)
 
   members  = relationship("GroupMembers", back_populates="group")
   chores   = relationship("Chores",       back_populates="group")
