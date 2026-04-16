@@ -18,12 +18,6 @@ const HARMONY_METRICS = [
   { label: "Mood Pulse", value: "Peaceful", color: "#ba1a1a", barColor: "#ba1a1a", barWidth: "55%" },
 ];
 
-const LEADERS: Leader[] = [
-  { id: "1", name: "Maya Singh", subtitle: "Top Chore Contributor", points: 840, isCurrentUser: false },
-  { id: "2", name: "Jordan Lee", subtitle: "Grocery Guru", points: 720, isCurrentUser: false },
-  { id: "3", name: "Alex Rivera (You)", subtitle: "Bill Splitting Ace", points: 695, isCurrentUser: true },
-];
-
 const UTILITIES: Utility[] = [
   {
     id: "1",
@@ -70,6 +64,7 @@ const UTILITIES: Utility[] = [
 export default function SummaryPage() {
   const [totalExpenses, setTotalExpenses] = useState(0);
   const [currentStreak, setCurrentStreak] = useState(0);
+  const [leaders, setLeaders] = useState<Leader[]>([]);
 
   const loadSummaryData = useCallback(async () => {
     try {
@@ -79,22 +74,49 @@ export default function SummaryPage() {
         console.error(`Group with invite code ${CURRENT_GROUP_INVITE_CODE} not found`);
         setTotalExpenses(0);
         setCurrentStreak(0);
+        setLeaders([]);
         return;
       }
 
       setCurrentStreak(Number(group.streak ?? 0));
 
-      const expenses = await api.fetchExpenses(group.id);
+      const [expenses, groupMembers, users] = await Promise.all([
+        api.fetchExpenses(group.id),
+        api.fetchGroupMembers(),
+        api.fetchUsers(),
+      ]);
 
       const summedTotal = expenses.reduce((sum, expense) => {
         return sum + Number(expense.total_amount ?? 0);
       }, 0);
 
       setTotalExpenses(summedTotal);
+
+      const membersInGroup = groupMembers.filter(
+        (member) => member.group_id === group.id
+      );
+
+      const groupUserIds = new Set(membersInGroup.map((member) => member.user_id));
+      const roleByUserId = new Map(
+        membersInGroup.map((member) => [member.user_id, member.role])
+      );
+
+      const mappedLeaders: Leader[] = users
+        .filter((user) => groupUserIds.has(user.id))
+        .map((user) => ({
+          id: String(user.id),
+          name: user.full_name,
+          subtitle: roleByUserId.get(user.id) === "admin" ? "Admin" : "Member",
+          points: Number(user.points ?? 0),
+        }))
+        .sort((a, b) => b.points - a.points);
+
+      setLeaders(mappedLeaders);
     } catch (error) {
       console.error("Failed to load summary data:", error);
       setTotalExpenses(0);
       setCurrentStreak(0);
+      setLeaders([]);
     }
   }, []);
 
@@ -120,7 +142,7 @@ export default function SummaryPage() {
       {/* Bottom row: leaders + utilities */}
       <div className="flex gap-6 items-start">
         <Leaderboard
-          leaders={LEADERS}
+          leaders={leaders}
         />
         <UtilitiesTracker utilities={UTILITIES} />
       </div>
