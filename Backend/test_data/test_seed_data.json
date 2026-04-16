@@ -69,6 +69,34 @@
       "email": "taylor.model.seed@divitup.test",
       "password_hash": "fake_hash_taylor",
       "full_name": "Taylor Green"
+    },
+    {
+      "id": 1011,
+      "username": "mattyb",
+      "email": "mbacheld@charlotte.edu",
+      "password_hash": "Bachelder123",
+      "full_name": "Matthew Bachelder"
+    },
+    {
+      "id": 1012,
+      "username": "kotharisoumil11",
+      "email": "skothar6@charlotte.edu",
+      "password_hash": "Kothari123",
+      "full_name": "Soumil Kothari"
+    },
+    {
+      "id": 1013,
+      "username": "jessica",
+      "email": "jmathe23@charlotte.edu",
+      "password_hash": "Mathew123",
+      "full_name": "Jessica Mathew"
+    },
+    {
+      "id": 1014,
+      "username": "ags_bajs",
+      "email": "abajaj2@charlotte.edu",
+      "password_hash": "Bajaj123",
+      "full_name": "Agam Bajaj"
     }
   ],
   "groups": [
@@ -85,6 +113,14 @@
       "name": "Maple House Model",
       "invite_code": "MAPLE26MOD",
       "created_by": 1002,
+      "streak": 0,
+      "last_streak_increment_on": null
+    },
+    {
+      "id": 2003,
+      "name": "Fresh Invite Group",
+      "invite_code": "FRESH26TEAM",
+      "created_by": 1012,
       "streak": 0,
       "last_streak_increment_on": null
     }
@@ -177,6 +213,38 @@
       "role": "member",
       "is_restricted": false,
       "points": 600
+    },
+    {
+      "id": 3012,
+      "group_id": 2003,
+      "user_id": 1011,
+      "role": "member",
+      "is_restricted": false,
+      "points": 0
+    },
+    {
+      "id": 3013,
+      "group_id": 2003,
+      "user_id": 1012,
+      "role": "admin",
+      "is_restricted": false,
+      "points": 0
+    },
+    {
+      "id": 3014,
+      "group_id": 2003,
+      "user_id": 1013,
+      "role": "member",
+      "is_restricted": false,
+      "points": 0
+    },
+    {
+      "id": 3015,
+      "group_id": 2003,
+      "user_id": 1014,
+      "role": "member",
+      "is_restricted": false,
+      "points": 0
     }
   ],
   "chores": [
