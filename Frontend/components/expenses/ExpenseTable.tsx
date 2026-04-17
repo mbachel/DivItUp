@@ -143,6 +143,8 @@ export default function ExpenseTable({
   const [editingSplitUserIds, setEditingSplitUserIds] = useState<number[]>([]);
   const [settledByUserId, setSettledByUserId] = useState<Record<number, boolean>>({});
   const [customSplitAmounts, setCustomSplitAmounts] = useState<Record<number, string>>({});
+  const [percentSplitAmounts, setPercentSplitAmounts] = useState<Record<number, string>>({});
+  const [editSplitMethod, setEditSplitMethod] = useState<"Evenly" | "%" | "Itemized">("Evenly");
   const [editError, setEditError] = useState("");
   const [showDeleteConfirm, setShowDeleteConfirm] = useState(false);
   const [isDeleting, setIsDeleting] = useState(false);
@@ -181,6 +183,8 @@ export default function ExpenseTable({
     setEditingSplitUserIds(selectedIds);
     setSettledByUserId(settledMap);
     setCustomSplitAmounts(customAmounts);
+    setPercentSplitAmounts({});
+    setEditSplitMethod(expense.split_type === "equal" ? "Evenly" : "Itemized");
     setEditError("");
     setShowDeleteConfirm(false);
   };
@@ -211,26 +215,67 @@ export default function ExpenseTable({
       return;
     }
 
+    const totalCents = toCents(Number(updated.total_amount));
     let amountsByUserId: Record<number, number> = {};
 
-    if (updated.split_type === "equal") {
+    if (editSplitMethod === "Evenly") {
       amountsByUserId = buildEqualSplits(Number(updated.total_amount), selectedUserIds);
+    } else if (editSplitMethod === "%") {
+      const parsed = selectedUserIds.map((userId) => {
+        const raw = percentSplitAmounts[userId] ?? "";
+        const value = Number(raw);
+        return { userId, value };
+      });
+
+      if (parsed.some((entry) => Number.isNaN(entry.value) || entry.value < 0)) {
+        setEditError("Percent split requires non-negative values for all selected members.");
+        return;
+      }
+
+      const totalPercent = parsed.reduce((sum, entry) => sum + entry.value, 0);
+      if (Math.abs(totalPercent - 100) > 0.01) {
+        setEditError("Percent split must add up to exactly 100%.");
+        return;
+      }
+
+      const weighted = parsed.map((entry) => {
+        const exact = (totalCents * entry.value) / 100;
+        const floored = Math.floor(exact);
+        return { userId: entry.userId, floored, fraction: exact - floored };
+      });
+
+      const flooredTotal = weighted.reduce((sum, entry) => sum + entry.floored, 0);
+      let remaining = totalCents - flooredTotal;
+      weighted.sort((a, b) => b.fraction - a.fraction);
+
+      const centsByUser = new Map<number, number>(
+        weighted.map((entry) => [entry.userId, entry.floored])
+      );
+      for (let i = 0; i < weighted.length && remaining > 0; i += 1) {
+        const uid = weighted[i].userId;
+        centsByUser.set(uid, (centsByUser.get(uid) ?? 0) + 1);
+        remaining -= 1;
+      }
+
+      amountsByUserId = selectedUserIds.reduce<Record<number, number>>((acc, userId) => {
+        acc[userId] = toDollars(centsByUser.get(userId) ?? 0);
+        return acc;
+      }, {});
     } else {
+      // Itemized — validate dollar amounts
       const parsedCents = selectedUserIds.map((userId) => {
         const value = Number(customSplitAmounts[userId] ?? "");
         return { userId, value, cents: toCents(value) };
       });
 
       if (parsedCents.some((entry) => Number.isNaN(entry.value) || entry.value < 0)) {
-        setEditError("Custom split amounts must be valid non-negative values.");
+        setEditError("Itemized amounts must be valid non-negative values.");
         return;
       }
 
-      const totalCents = toCents(Number(updated.total_amount));
       const customTotal = parsedCents.reduce((sum, entry) => sum + entry.cents, 0);
-
       if (customTotal !== totalCents) {
-        setEditError("Custom split amounts must add up to the total expense amount.");
+        setEditError("Itemized amounts must add up to the total expense amount.");
         return;
       }
 
@@ -240,12 +285,13 @@ export default function ExpenseTable({
       }, {});
     }
 
+    const backendSplitType = editSplitMethod === "Evenly" ? "equal" : "custom";
     const existingRows = splitRowsByExpense[updated.id] || [];
 
     const updatedExpense = await api.updateExpense(updated.id, {
       title: updated.title,
       total_amount: Number(updated.total_amount),
-      split_type: updated.split_type,
+      split_type: backendSplitType,
     });
 
     if (!updatedExpense) {
@@ -262,10 +308,7 @@ export default function ExpenseTable({
 
         if (existing) {
           const currentAmount = toDollars(toCents(Number(existing.amount_owed)));
-          const updatePayload: Partial<{
-            amount_owed: number;
-            is_settled: boolean;
-          }> = {
+          const updatePayload: Partial<{ amount_owed: number; is_settled: boolean }> = {
             amount_owed: targetAmount,
             is_settled: settledByUserId[userId] ?? false,
           };
@@ -503,16 +546,24 @@ export default function ExpenseTable({
 
               <div>
                 <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
-                  Split Type
+                  Split Method
                 </label>
-                <select
-                  value={editingExpense.split_type}
-                  onChange={(e) => setEditingExpense({ ...editingExpense, split_type: e.target.value })}
-                  className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-4 py-3 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
-                >
-                  <option value="equal">Equal Split</option>
-                  <option value="custom">Custom Split</option>
-                </select>
+                <div className="flex gap-2">
+                  {(["Evenly", "%", "Itemized"] as const).map((method) => (
+                    <button
+                      key={method}
+                      type="button"
+                      onClick={() => setEditSplitMethod(method)}
+                      className={`flex-1 py-2 rounded-xl text-sm font-bold transition-all ${
+                        editSplitMethod === method
+                          ? "bg-primary text-white"
+                          : "bg-surface-container-low text-outline hover:bg-surface-container-high"
+                      }`}
+                    >
+                      {method}
+                    </button>
+                  ))}
+                </div>
               </div>
 
               <div>
@@ -542,10 +593,10 @@ export default function ExpenseTable({
                 </div>
               </div>
 
-              {editingExpense.split_type === "custom" && editingSplitUserIds.length > 0 && (
+              {editSplitMethod === "%" && editingSplitUserIds.length > 0 && (
                 <div>
                   <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
-                    Custom Amounts
+                    Percent Shares
                   </label>
                   <div className="space-y-2">
                     {editingSplitUserIds
@@ -553,7 +604,45 @@ export default function ExpenseTable({
                       .sort((a, b) => a - b)
                       .map((userId) => {
                         const label =
-                          groupMemberOptions.find((option) => option.userId === userId)?.label ||
+                          groupMemberOptions.find((opt) => opt.userId === userId)?.label ||
+                          `User #${userId}`;
+                        return (
+                          <div key={userId} className="grid grid-cols-[1fr_90px] items-center gap-3">
+                            <span className="text-sm text-on-surface">{label}</span>
+                            <input
+                              type="number"
+                              min="0"
+                              step="0.01"
+                              value={percentSplitAmounts[userId] ?? ""}
+                              onChange={(e) =>
+                                setPercentSplitAmounts((prev) => ({
+                                  ...prev,
+                                  [userId]: e.target.value,
+                                }))
+                              }
+                              className="w-full bg-surface-container-low border border-outline-variant rounded-xl px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary/30 focus:border-primary transition-all"
+                              placeholder="0"
+                            />
+                          </div>
+                        );
+                      })}
+                  </div>
+                  <p className="mt-1 text-[11px] text-outline">Total must equal 100%.</p>
+                </div>
+              )}
+
+              {editSplitMethod === "Itemized" && editingSplitUserIds.length > 0 && (
+                <div>
+                  <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
+                    Itemized Amounts
+                  </label>
+                  <div className="space-y-2">
+                    {editingSplitUserIds
+                      .slice()
+                      .sort((a, b) => a - b)
+                      .map((userId) => {
+                        const label =
+                          groupMemberOptions.find((opt) => opt.userId === userId)?.label ||
                           `User #${userId}`;
                         return (
                           <div key={userId} className="grid grid-cols-[1fr_120px] items-center gap-3">
@@ -576,7 +665,9 @@ export default function ExpenseTable({
                         );
                       })}
                   </div>
-                  <p className="mt-1 text-[11px] text-outline">Custom amounts must add up to total.</p>
+                  <p className="mt-1 text-[11px] text-outline">
+                    Itemized amounts must add up to the total expense amount.
+                  </p>
                 </div>
               )}
 
