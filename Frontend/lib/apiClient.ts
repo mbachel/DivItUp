@@ -345,6 +345,29 @@ export async function fetchChoreAssignments(): Promise<ChoreAssignmentBackend[]>
   return await res.json();
 }
 
+export async function createChoreAssignment(
+  payload: Omit<ChoreAssignmentBackend, "id" | "completed_at"> & { completed_at?: string | null }
+): Promise<ChoreAssignmentBackend | null> {
+  try {
+    const res = await fetch(`/api/chore-assignments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Create chore assignment failed: ${res.status} ${res.statusText}`
+      );
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating chore assignment:", err);
+    return null;
+  }
+}
+
 export async function updateChoreAssignment(
   assignmentId: number,
   status: string

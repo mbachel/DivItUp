@@ -1,9 +1,8 @@
 "use client";
 
 import RotationAlert from "../../components/chores/NextChoreAlert";
-import StreakCard from "../../components/chores/StreakCard";
+import AddChoreCard from "../../components/chores/AddChoreCard";
 import ChoreColumn from "../../components/chores/ChoreColumn";
-import GroupGoalCard from "../../components/chores/GroupGoalCard";
 import { useState, useEffect } from "react";
 import * as api from "../../lib/apiClient";
 import type { Chore } from "../../components/chores/ChoreCard";
@@ -25,7 +24,8 @@ function computeDaysLeft(dueDate: string): number {
 
 function mapBackendChoreToUI(
   backendChore: api.ChoreBackend,
-  dueDate?: string
+  dueDate?: string,
+  assignmentStatus?: string
 ): Chore {
   const pointsMap: Record<string, number> = {
     daily: 50,
@@ -43,9 +43,16 @@ function mapBackendChoreToUI(
         ? "Due Today"
         : backendChore.frequency === "weekly"
           ? "Due This Week"
-          : "Due This Month",
+          : backendChore.frequency === "one_time"
+            ? "One Time"
+            : "Due This Month",
     assignee: "Unassigned",
-    status: "pending",
+    status:
+      assignmentStatus === "completed"
+        ? "complete"
+        : assignmentStatus === "skipped"
+          ? "skipped"
+          : "pending",
     // Use the real due date from the assignment when available; fall
     // back to undefined so ChoreCard omits the label rather than
     // showing a stale/fake number.
@@ -92,6 +99,9 @@ export default function ChoresPage() {
   const [error, setError] = useState("");
   const [assignments, setAssignments] = useState<api.ChoreAssignmentBackend[]>([]);
   const [currentMember, setCurrentMember] = useState<api.GroupMemberBackend | null>(null);
+  const [groupMembers, setGroupMembers] = useState<api.GroupMemberBackend[]>([]);
+  const [users, setUsers] = useState<api.UserBackend[]>([]);
+  const [currentGroupId, setCurrentGroupId] = useState<number | null>(null);
 
   const [nextChoreTitle, setNextChoreTitle] = useState("No chores assigned");
   const [nextChoreDueText, setNextChoreDueText] = useState("You're all caught up.");
@@ -148,11 +158,28 @@ export default function ChoresPage() {
         }
       }
 
+      // Map chore_id → assignment status for all group chores so every
+      // card reflects the real backend state regardless of who is assigned.
+      const choreUserStatusMap = new Map<number, string>();
+      for (const assignment of allAssignments) {
+        if (groupChoreIdSet.has(Number(assignment.chore_id))) {
+          choreUserStatusMap.set(Number(assignment.chore_id), assignment.status);
+        }
+      }
+
+      // Show all chores in the group, not just the current user's
       const mapped = chores.map((chore) =>
-        mapBackendChoreToUI(chore, choreEarliestDueMap.get(Number(chore.id)))
+        mapBackendChoreToUI(
+          chore,
+          choreEarliestDueMap.get(Number(chore.id)),
+          choreUserStatusMap.get(Number(chore.id))
+        )
       );
       setAllChores(mapped);
       setAssignments(allAssignments);
+      setGroupMembers(groupMembers.filter((m) => m.group_id === group.id));
+      setUsers(users);
+      setCurrentGroupId(group.id);
 
       // Store the current user's group member record so handleChoreComplete
       // can read their current points total and award new ones.
@@ -167,7 +194,10 @@ export default function ChoresPage() {
         .filter((assignment) => groupUserIdSet.has(assignment.assigned_to))
         .filter((assignment) => assignment.assigned_to === CURRENT_USER_ID)
         .filter((assignment) => groupChoreIdSet.has(Number(assignment.chore_id)))
-        .filter((assignment) => assignment.status.toLowerCase() !== "completed");
+        .filter((assignment) =>
+          assignment.status.toLowerCase() !== "completed" &&
+          assignment.status.toLowerCase() !== "skipped"
+        );
 
       const overdueAssignments = userAssignments
         .filter((assignment) => new Date(assignment.due_date).getTime() < Date.now())
@@ -224,7 +254,6 @@ export default function ChoresPage() {
     const assignment = assignments.find(
       (a) =>
         Number(a.chore_id) === Number(choreId) &&
-        a.assigned_to === CURRENT_USER_ID &&
         a.status.toLowerCase() !== "completed"
     );
 
@@ -276,9 +305,46 @@ export default function ChoresPage() {
     }
   };
 
+  const handleChoreSkip = async (choreId: string) => {
+    const assignment = assignments.find(
+      (a) =>
+        Number(a.chore_id) === Number(choreId) &&
+        a.status.toLowerCase() !== "completed" &&
+        a.status.toLowerCase() !== "skipped"
+    );
+
+    if (!assignment) {
+      setError("Could not find the chore assignment to skip.");
+      return;
+    }
+
+    try {
+      const updated = await api.updateChoreAssignment(assignment.id, "skipped");
+
+      if (updated) {
+        setAssignments(
+          assignments.map((a) => (a.id === assignment.id ? updated : a))
+        );
+        setAllChores(
+          allChores.map((chore) =>
+            chore.id === choreId ? { ...chore, status: "skipped" } : chore
+          )
+        );
+        await new Promise((resolve) => setTimeout(resolve, 1000));
+        await loadChoresAndAssignments();
+      } else {
+        setError("Failed to skip chore. Please try again.");
+      }
+    } catch (err) {
+      setError("Error skipping chore.");
+      console.error(err);
+    }
+  };
+
   const dailyChores = allChores.filter((c) => c.dueLabel === "Due Today");
   const weeklyChores = allChores.filter((c) => c.dueLabel === "Due This Week");
   const monthlyChores = allChores.filter((c) => c.dueLabel === "Due This Month");
+  const oneTimeChores = allChores.filter((c) => c.dueLabel === "One Time");
 
   if (loading) {
     return (
@@ -302,15 +368,15 @@ export default function ChoresPage() {
           dueText={nextChoreDueText}
           assigneeName={nextChoreAssignee}
         />
-        <StreakCard streakDays={14} cycle={4} totalCycles={12} />
       </div>
 
-      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_280px] gap-6 items-start">
+      <div className="grid grid-cols-1 lg:grid-cols-[1fr_1fr_1fr_1fr_260px] gap-4 items-start">
         <ChoreColumn
           title="Daily"
           taskCount={dailyChores.length}
           chores={dailyChores}
           onComplete={handleChoreComplete}
+          onSkip={handleChoreSkip}
         />
 
         <ChoreColumn
@@ -318,6 +384,7 @@ export default function ChoresPage() {
           taskCount={weeklyChores.length}
           chores={weeklyChores}
           onComplete={handleChoreComplete}
+          onSkip={handleChoreSkip}
         />
 
         <ChoreColumn
@@ -325,14 +392,38 @@ export default function ChoresPage() {
           taskCount={monthlyChores.length}
           chores={monthlyChores}
           onComplete={handleChoreComplete}
+          onSkip={handleChoreSkip}
+        />
+
+        <ChoreColumn
+          title="One Time"
+          taskCount={oneTimeChores.length}
+          chores={oneTimeChores}
+          onComplete={handleChoreComplete}
+          onSkip={handleChoreSkip}
         />
 
         <div className="flex flex-col gap-4">
-          <GroupGoalCard
-            goalName="Perfect Week"
-            daysComplete={6}
-            totalDays={7}
-          />
+          {currentGroupId !== null && (
+            <AddChoreCard
+              groupId={currentGroupId}
+              groupMembers={groupMembers}
+              users={users}
+              onChoreAdded={loadChoresAndAssignments}
+              onCreateChore={(title: string, frequency: string) =>
+                api.createChore({ group_id: currentGroupId, title, frequency })
+              }
+              onCreateAssignment={(choreId: number, assignedTo: number, dueDate: string, status: string) =>
+                api.createChoreAssignment({
+                  chore_id: choreId,
+                  assigned_to: assignedTo,
+                  due_date: dueDate,
+                  status,
+                  completed_at: null,
+                })
+              }
+            />
+          )}
         </div>
       </div>
     </>
