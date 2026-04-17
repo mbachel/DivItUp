@@ -91,7 +91,7 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
 
   return (
     <div>
-      {/* Header + filters */}
+      {/* top row with section title and quick filter chips */}
       <div className="flex items-center justify-between mb-5">
         <h2 className="text-2xl font-bold text-on-surface font-headline">Expenses</h2>
         <div className="flex gap-2 flex-wrap">
@@ -111,7 +111,7 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
         </div>
       </div>
 
-      {/* Table */}
+      {/* main expense list with category, amount, and split details */}
       <div className="bg-white rounded-2xl border border-outline-variant/40 overflow-hidden">
         <div className="grid grid-cols-[2.4fr_1.2fr_1fr_1.2fr_0.8fr_56px] px-6 py-3 border-b border-outline-variant/30 items-center">
           {["Description", "Category", "Amount", "Split Type", "ID", "Action"].map((h, index) => (
@@ -184,7 +184,7 @@ export default function ExpenseTable({ expenses = [], onRefresh }: ExpenseTableP
         )}
       </div>
 
-      {/* Edit Modal */}
+      {/* inline modal for updating or removing a selected expense */}
       {editingExpense && (
         <div className="fixed inset-0 bg-black/40 z-50 flex items-center justify-center p-4">
           <div className="bg-white rounded-2xl p-6 w-full max-w-md shadow-xl">
