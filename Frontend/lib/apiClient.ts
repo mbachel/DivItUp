@@ -121,6 +121,23 @@ export interface ReceiptItemCreatePayload {
   unit_price: number;
 }
 
+export interface PaymentBackend {
+  id: number;
+  payer_id: number;
+  payee_id: number;
+  expense_split_id: number;
+  amount: number;
+  paid_at: string;
+}
+
+export interface PaymentCreatePayload {
+  payer_id: number;
+  payee_id: number;
+  expense_split_id: number;
+  amount: number;
+  paid_at?: string;
+}
+
 // ============ Groups API ============
 
 export async function fetchGroups(): Promise<GroupBackend[]> {
@@ -442,7 +459,9 @@ export async function fetchChoreAssignments(): Promise<ChoreAssignmentBackend[]>
 }
 
 export async function createChoreAssignment(
-  payload: Omit<ChoreAssignmentBackend, "id" | "completed_at"> & { completed_at?: string | null }
+  payload: Omit<ChoreAssignmentBackend, "id" | "completed_at"> & {
+    completed_at?: string | null;
+  }
 ): Promise<ChoreAssignmentBackend | null> {
   try {
     const res = await fetch(`/api/chore-assignments`, {
@@ -534,5 +553,58 @@ export async function createReceiptItem(
   } catch (err) {
     console.error("Error creating receipt item:", err);
     return null;
+  }
+}
+
+// ============ Payments API ============
+
+export async function fetchPayments(): Promise<PaymentBackend[]> {
+  const res = await fetch(`/api/payments`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(`Fetch payments failed: ${res.status} ${res.statusText}`);
+  }
+
+  return await res.json();
+}
+
+export async function createPayment(
+  payload: PaymentCreatePayload
+): Promise<PaymentBackend | null> {
+  try {
+    const res = await fetch(`/api/payments`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(`Create payment failed: ${res.status} ${res.statusText}`);
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating payment:", err);
+    return null;
+  }
+}
+
+export async function deletePayment(id: number): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/payments/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      throw new Error(`Delete payment failed: ${res.status} ${res.statusText}`);
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Error deleting payment:", err);
+    return false;
   }
 }

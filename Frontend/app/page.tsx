@@ -2,18 +2,19 @@
 
 import { useEffect, useMemo, useState } from "react";
 import LockedAlert from "@/components/LockedAlert";
-import FinancialOverview from "@/components/FinancialOverview";
 import WhoIsNext from "@/components/WhoIsNext";
-import ActivityFeed from "@/components/ActivityFeed";
+import SettlementHealth from "@/components/SettlementHealth";
 import {
   fetchChores,
   fetchChoreAssignments,
   fetchGroupMembers,
   fetchUsers,
+  fetchExpenses,
+  fetchExpenseSplits,
+  fetchPayments,
 } from "@/lib/apiClient";
-import { balanceEntries, recentActivities } from "@/lib/mockData";
 
-// TODO: Replace these with actual auth/session values later
+// TODO: Replace with real auth/session values later
 const CURRENT_GROUP_ID = 2002;
 const CURRENT_USER_ID = 1002;
 
@@ -25,9 +26,32 @@ type DashboardChoreEntry = {
   isPriority?: boolean;
 };
 
+type RecentPayment = {
+  id: number;
+  payerName: string;
+  payeeName: string;
+  amount: number;
+  paidAt: string;
+};
+
+type SettlementData = {
+  totalOutstanding: number;
+  totalSettled: number;
+  openSplits: number;
+  settledThisWeek: number;
+  recentPayments: RecentPayment[];
+};
+
 export default function DashboardPage() {
   const [isRestricted, setIsRestricted] = useState(false);
   const [upcomingChores, setUpcomingChores] = useState<DashboardChoreEntry[]>([]);
+  const [settlement, setSettlement] = useState<SettlementData>({
+    totalOutstanding: 0,
+    totalSettled: 0,
+    openSplits: 0,
+    settledThisWeek: 0,
+    recentPayments: [],
+  });
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -35,29 +59,29 @@ export default function DashboardPage() {
       try {
         setLoading(true);
 
-        const [groupMembers, chores, assignments, users] = await Promise.all([
-          fetchGroupMembers(),
-          fetchChores(CURRENT_GROUP_ID),
-          fetchChoreAssignments(),
-          fetchUsers(),
-        ]);
+        const [groupMembers, chores, assignments, users, expenses, splits, payments] =
+          await Promise.all([
+            fetchGroupMembers(),
+            fetchChores(CURRENT_GROUP_ID),
+            fetchChoreAssignments(),
+            fetchUsers(),
+            fetchExpenses(CURRENT_GROUP_ID),
+            fetchExpenseSplits(),
+            fetchPayments().catch(() => []),
+          ]);
 
+        // ── Restricted check ──────────────────────────────────────
         const currentGroupMember = groupMembers.find(
-          (member) =>
-            member.group_id === CURRENT_GROUP_ID &&
-            member.user_id === CURRENT_USER_ID
+          (m) => m.group_id === CURRENT_GROUP_ID && m.user_id === CURRENT_USER_ID
         );
-
         setIsRestricted(Boolean(currentGroupMember?.is_restricted));
 
-        const groupChoreIds = new Set(chores.map((chore) => chore.id));
+        // ── Chores ────────────────────────────────────────────────
+        const groupChoreIds = new Set(chores.map((c) => c.id));
 
-        // next upcoming pending chores for the group, sorted by due date
         const upcomingAssignments = assignments
           .filter(
-            (assignment) =>
-              groupChoreIds.has(assignment.chore_id) &&
-              assignment.status === "pending"
+            (a) => groupChoreIds.has(a.chore_id) && a.status === "pending"
           )
           .sort(
             (a, b) =>
@@ -67,28 +91,20 @@ export default function DashboardPage() {
 
         const mapped: DashboardChoreEntry[] = upcomingAssignments.map(
           (assignment, index) => {
-            const matchingChore = chores.find(
-              (c) => c.id === assignment.chore_id
-            );
-            const matchingUser = users.find(
-              (u) => u.id === assignment.assigned_to
-            );
+            const matchingChore = chores.find((c) => c.id === assignment.chore_id);
+            const matchingUser = users.find((u) => u.id === assignment.assigned_to);
 
             const due = new Date(assignment.due_date);
             const today = new Date();
             const diff = Math.ceil(
-              (due.setHours(0, 0, 0, 0) - today.setHours(0, 0, 0, 0)) /
-                86400000
+              (due.setHours(0, 0, 0, 0) - today.setHours(0, 0, 0, 0)) / 86400000
             );
 
             const timeLabel =
-              diff === 0
-                ? "TODAY"
-                : diff === 1
-                  ? "TOMORROW"
-                  : diff < 0
-                    ? `OVERDUE BY ${Math.abs(diff)} DAYS`
-                    : `IN ${diff} DAYS`;
+              diff === 0 ? "TODAY"
+              : diff === 1 ? "TOMORROW"
+              : diff < 0 ? `OVERDUE BY ${Math.abs(diff)} DAYS`
+              : `IN ${diff} DAYS`;
 
             return {
               timeLabel,
@@ -99,12 +115,63 @@ export default function DashboardPage() {
             };
           }
         );
-
         setUpcomingChores(mapped);
+
+        // ── Settlement Health ─────────────────────────────────────
+        const groupExpenseIds = new Set(expenses.map((e) => e.id));
+        const groupSplits = splits.filter((s) =>
+          groupExpenseIds.has(s.expense_id)
+        );
+
+        // Number() wrapping required — FastAPI DECIMAL columns serialize as strings
+        const totalOutstanding = groupSplits
+          .filter((s) => !s.is_settled)
+          .reduce((sum, s) => sum + Number(s.amount_owed), 0);
+
+        const totalSettled = groupSplits
+          .filter((s) => s.is_settled)
+          .reduce((sum, s) => sum + Number(s.amount_owed), 0);
+
+        const openSplits = groupSplits.filter((s) => !s.is_settled).length;
+
+        const groupSplitIds = new Set(groupSplits.map((s) => s.id));
+        const groupPayments = payments.filter((p) =>
+          groupSplitIds.has(p.expense_split_id)
+        );
+
+        const oneWeekAgo = new Date();
+        oneWeekAgo.setDate(oneWeekAgo.getDate() - 7);
+        const settledThisWeek = groupPayments.filter(
+          (p) => new Date(p.paid_at) >= oneWeekAgo
+        ).length;
+
+        const recentPayments: RecentPayment[] = groupPayments
+          .sort(
+            (a, b) =>
+              new Date(b.paid_at).getTime() - new Date(a.paid_at).getTime()
+          )
+          .slice(0, 5)
+          .map((p) => {
+            const payer = users.find((u) => u.id === p.payer_id);
+            const payee = users.find((u) => u.id === p.payee_id);
+            return {
+              id: p.id,
+              payerName: payer?.full_name ?? "Unknown",
+              payeeName: payee?.full_name ?? "Unknown",
+              amount: Number(p.amount),
+              paidAt: p.paid_at,
+            };
+          });
+
+        setSettlement({
+          totalOutstanding,
+          totalSettled,
+          openSplits,
+          settledThisWeek,
+          recentPayments,
+        });
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
-        setIsRestricted(false);
-        setUpcomingChores([]);
       } finally {
         setLoading(false);
       }
@@ -114,10 +181,7 @@ export default function DashboardPage() {
   }, []);
 
   const choresToDisplay = useMemo(() => {
-    if (upcomingChores.length > 0) {
-      return upcomingChores;
-    }
-
+    if (upcomingChores.length > 0) return upcomingChores;
     return [
       {
         timeLabel: "ALL DONE",
@@ -139,14 +203,15 @@ export default function DashboardPage() {
       )}
 
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
-        <FinancialOverview totalDebt={452.2} entries={balanceEntries} />
+        <SettlementHealth
+          totalOutstanding={settlement.totalOutstanding}
+          totalSettled={settlement.totalSettled}
+          openSplits={settlement.openSplits}
+          settledThisWeek={settlement.settledThisWeek}
+          recentPayments={settlement.recentPayments}
+        />
 
         <WhoIsNext chores={loading ? [] : choresToDisplay} />
-
-        <ActivityFeed
-          activities={recentActivities}
-          onViewAll={() => console.log("View all")}
-        />
       </div>
     </>
   );
