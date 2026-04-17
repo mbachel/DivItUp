@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from .. import auth as auth_routes
 from . import (
     users,
     groups,
@@ -15,6 +16,7 @@ from . import (
 
 def load_routes(app: FastAPI):
     api_prefix = "/api"
+    app.include_router(auth_routes.router, prefix=api_prefix)
     app.include_router(users.router, prefix=api_prefix)
     app.include_router(groups.router, prefix=api_prefix)
     app.include_router(group_members.router, prefix=api_prefix)
