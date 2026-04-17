@@ -3,7 +3,7 @@
 import RotationAlert from "../../components/chores/NextChoreAlert";
 import AddChoreCard from "../../components/chores/AddChoreCard";
 import ChoreColumn from "../../components/chores/ChoreColumn";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import * as api from "../../lib/apiClient";
 import type { Chore } from "../../components/chores/ChoreCard";
 
@@ -102,6 +102,15 @@ export default function ChoresPage() {
   const [groupMembers, setGroupMembers] = useState<api.GroupMemberBackend[]>([]);
   const [users, setUsers] = useState<api.UserBackend[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<number | null>(null);
+
+  const [undoToast, setUndoToast] = useState<{
+    assignmentId: number;
+    choreId: string;
+    choreTitle: string;
+    action: "complete" | "skip";
+    pointsAwarded: number;
+  } | null>(null);
+  const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
   const [nextChoreTitle, setNextChoreTitle] = useState("No chores assigned");
   const [nextChoreDueText, setNextChoreDueText] = useState("You're all caught up.");
@@ -249,8 +258,40 @@ export default function ChoresPage() {
     loadChoresAndAssignments();
   }, []);
 
+  const dismissUndoToast = () => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    setUndoToast(null);
+  };
+
+  const scheduleReload = () => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    undoTimerRef.current = setTimeout(async () => {
+      setUndoToast(null);
+      await loadChoresAndAssignments();
+    }, 10000);
+  };
+
+  const handleUndo = async () => {
+    if (!undoToast) return;
+    dismissUndoToast();
+    try {
+      await api.updateChoreAssignment(undoToast.assignmentId, "pending");
+      // Reverse points if the action was a completion
+      if (undoToast.action === "complete" && currentMember) {
+        const revertedPoints = (currentMember.points ?? 0) - undoToast.pointsAwarded;
+        const updatedMember = await api.updateGroupMember(currentMember.id, {
+          points: Math.max(0, revertedPoints),
+        });
+        if (updatedMember) setCurrentMember(updatedMember);
+      }
+      await loadChoresAndAssignments();
+    } catch (err) {
+      setError("Failed to undo. Please try again.");
+      console.error(err);
+    }
+  };
+
   const handleChoreComplete = async (choreId: string) => {
-    // Find the assignment for this chore for the current user
     const assignment = assignments.find(
       (a) =>
         Number(a.chore_id) === Number(choreId) &&
@@ -266,36 +307,30 @@ export default function ChoresPage() {
       const updated = await api.updateChoreAssignment(assignment.id, "completed");
 
       if (updated) {
-        // Update local state immediately so the chore stays visible with done state
-        setAssignments(
-          assignments.map((a) => (a.id === assignment.id ? updated : a))
-        );
+        setAssignments(assignments.map((a) => (a.id === assignment.id ? updated : a)));
+        setAllChores(allChores.map((chore) =>
+          chore.id === choreId ? { ...chore, status: "complete" } : chore
+        ));
 
-        // Update the chore's status to "complete" to show strikethrough
-        setAllChores(
-          allChores.map((chore) =>
-            chore.id === choreId ? { ...chore, status: "complete" } : chore
-          )
-        );
-
-        // Award points — look up the chore's point value and add it to
-        // the current user's group_members points total.
+        // Award points
         const completedChore = allChores.find((c) => c.id === choreId);
+        let pointsAwarded = 0;
         if (completedChore && currentMember) {
-          const newPoints = (currentMember.points ?? 0) + completedChore.points;
-          const updatedMember = await api.updateGroupMember(currentMember.id, {
-            points: newPoints,
-          });
-          // Keep local currentMember in sync so rapid completions accumulate
-          // correctly without waiting for the full reload.
+          pointsAwarded = completedChore.points;
+          const newPoints = (currentMember.points ?? 0) + pointsAwarded;
+          const updatedMember = await api.updateGroupMember(currentMember.id, { points: newPoints });
           if (updatedMember) setCurrentMember(updatedMember);
         }
 
-        // Wait for animation to complete
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-
-        // Then reload to clean up and update next chore alert
-        await loadChoresAndAssignments();
+        // Show undo toast and schedule reload after 4 seconds
+        setUndoToast({
+          assignmentId: assignment.id,
+          choreId,
+          choreTitle: completedChore?.title ?? "Chore",
+          action: "complete",
+          pointsAwarded,
+        });
+        scheduleReload();
       } else {
         setError("Failed to mark chore as complete. Please try again.");
       }
@@ -322,16 +357,21 @@ export default function ChoresPage() {
       const updated = await api.updateChoreAssignment(assignment.id, "skipped");
 
       if (updated) {
-        setAssignments(
-          assignments.map((a) => (a.id === assignment.id ? updated : a))
-        );
-        setAllChores(
-          allChores.map((chore) =>
-            chore.id === choreId ? { ...chore, status: "skipped" } : chore
-          )
-        );
-        await new Promise((resolve) => setTimeout(resolve, 1000));
-        await loadChoresAndAssignments();
+        setAssignments(assignments.map((a) => (a.id === assignment.id ? updated : a)));
+        const skippedChore = allChores.find((c) => c.id === choreId);
+        setAllChores(allChores.map((chore) =>
+          chore.id === choreId ? { ...chore, status: "skipped" } : chore
+        ));
+
+        // Show undo toast and schedule reload after 4 seconds
+        setUndoToast({
+          assignmentId: assignment.id,
+          choreId,
+          choreTitle: skippedChore?.title ?? "Chore",
+          action: "skip",
+          pointsAwarded: 0,
+        });
+        scheduleReload();
       } else {
         setError("Failed to skip chore. Please try again.");
       }
@@ -426,6 +466,30 @@ export default function ChoresPage() {
           )}
         </div>
       </div>
+      {/* Undo toast */}
+      {undoToast && (
+        <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-on-surface text-surface px-5 py-3.5 rounded-2xl shadow-xl animate-fade-in">
+          <span className="material-symbols-outlined text-base">
+            {undoToast.action === "complete" ? "check_circle" : "block"}
+          </span>
+          <span className="text-sm font-medium">
+            <span className="font-bold">{undoToast.choreTitle}</span>
+            {undoToast.action === "complete" ? " marked complete" : " skipped"}
+          </span>
+          <button
+            onClick={handleUndo}
+            className="ml-2 text-sm font-bold underline underline-offset-2 hover:opacity-80 transition-opacity"
+          >
+            Undo
+          </button>
+          <button
+            onClick={dismissUndoToast}
+            className="ml-1 opacity-60 hover:opacity-100 transition-opacity"
+          >
+            <span className="material-symbols-outlined text-base">close</span>
+          </button>
+        </div>
+      )}
     </>
   );
 }
