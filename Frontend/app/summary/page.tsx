@@ -1,7 +1,10 @@
 "use client";
 
 import { useCallback, useEffect, useState } from "react";
-import HouseHarmonyCard from "../../components/summary/HouseHarmonyCard";
+import HouseHarmonyCard, {
+  type ChoreDistributionSlice,
+  type ChorePulseItem,
+} from "../../components/summary/HouseHarmonyCard";
 import StatsPanel from "../../components/summary/StatsPanel";
 import Leaderboard from "../../components/summary/Leaderboard";
 import UtilitiesTracker from "../../components/summary/UtilitiesTracker";
@@ -11,13 +14,37 @@ import * as api from "../../lib/apiClient";
 
 const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
 const TRACKED_UTILITY_CATEGORY = "utilities";
-
-const HARMONY_METRICS = [
-  { label: "Chore Speed", value: "Fast", color: "#00606e", barColor: "#00606e", barWidth: "80%" },
-  { label: "Debt Settling", value: "Instant", color: "#632ce5", barColor: "#632ce5", barWidth: "95%" },
-  { label: "Communication", value: "Active", color: "#844800", barColor: "#844800", barWidth: "65%" },
-  { label: "Mood Pulse", value: "Peaceful", color: "#ba1a1a", barColor: "#ba1a1a", barWidth: "55%" },
+const DUE_SOON_WINDOW_DAYS = 3;
+const DISTRIBUTION_COLORS = [
+  "#0f766e",
+  "#1d4ed8",
+  "#7c3aed",
+  "#db2777",
+  "#b45309",
+  "#059669",
+  "#7f1d1d",
 ];
+
+interface ChorePulseSummary {
+  overdueCount: number;
+  dueSoonCount: number;
+  completionRate: number;
+  completedCount: number;
+  totalCount: number;
+  monthLabel: string;
+  urgentItems: ChorePulseItem[];
+  distribution: ChoreDistributionSlice[];
+}
+
+function getMonthLabel(now: Date) {
+  const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+  const monthEnd = new Date(now.getFullYear(), now.getMonth() + 1, 0);
+
+  const startText = `${monthStart.toLocaleString("en-US", { month: "short" })} ${monthStart.getDate()}`;
+  const endText = `${monthEnd.toLocaleString("en-US", { month: "short" })} ${monthEnd.getDate()}`;
+
+  return `${startText} - ${endText}`;
+}
 
 function formatCategoryName(category: string | null | undefined) {
   if (!category) return "Utility";
@@ -51,6 +78,16 @@ export default function SummaryPage() {
   const [currentStreak, setCurrentStreak] = useState(0);
   const [leaders, setLeaders] = useState<Leader[]>([]);
   const [utilities, setUtilities] = useState<Utility[]>([]);
+  const [chorePulse, setChorePulse] = useState<ChorePulseSummary>({
+    overdueCount: 0,
+    dueSoonCount: 0,
+    completionRate: 0,
+    completedCount: 0,
+    totalCount: 0,
+    monthLabel: getMonthLabel(new Date()),
+    urgentItems: [],
+    distribution: [],
+  });
 
   const loadSummaryData = useCallback(async () => {
     try {
@@ -62,15 +99,27 @@ export default function SummaryPage() {
         setCurrentStreak(0);
         setLeaders([]);
         setUtilities([]);
+        setChorePulse({
+          overdueCount: 0,
+          dueSoonCount: 0,
+          completionRate: 0,
+          completedCount: 0,
+          totalCount: 0,
+          monthLabel: getMonthLabel(new Date()),
+          urgentItems: [],
+          distribution: [],
+        });
         return;
       }
 
       setCurrentStreak(Number(group.streak ?? 0));
 
-      const [expenses, groupMembers, users] = await Promise.all([
+      const [expenses, groupMembers, users, chores, assignments] = await Promise.all([
         api.fetchExpenses(group.id),
         api.fetchGroupMembers(),
         api.fetchUsers(),
+        api.fetchChores(group.id),
+        api.fetchChoreAssignments(),
       ]);
 
       const summedTotal = expenses.reduce((sum, expense) => {
@@ -134,12 +183,126 @@ export default function SummaryPage() {
         });
 
       setUtilities(mappedUtilities);
+
+      const groupChoreIds = new Set(
+        chores
+          .filter((chore) => Number(chore.group_id) === Number(group.id))
+          .map((chore) => chore.id)
+      );
+
+      const choreTitleById = new Map(chores.map((chore) => [chore.id, chore.title]));
+      const userNameById = new Map(users.map((user) => [user.id, user.full_name]));
+
+      const groupAssignments = assignments.filter((assignment) =>
+        groupChoreIds.has(assignment.chore_id)
+      );
+
+      const now = new Date();
+      const startOfToday = new Date(now.getFullYear(), now.getMonth(), now.getDate());
+      const dueSoonEnd = new Date(startOfToday);
+      dueSoonEnd.setDate(dueSoonEnd.getDate() + DUE_SOON_WINDOW_DAYS);
+
+      const overdueItems: ChorePulseItem[] = [];
+      const dueSoonItems: ChorePulseItem[] = [];
+
+      groupAssignments.forEach((assignment) => {
+        const dueDate = new Date(assignment.due_date);
+        if (Number.isNaN(dueDate.getTime())) {
+          return;
+        }
+
+        const isCompleted = assignment.status === "completed";
+        const isOverdue =
+          assignment.status === "overdue" ||
+          (!isCompleted && dueDate < startOfToday);
+
+        const item: ChorePulseItem = {
+          id: String(assignment.id),
+          title: choreTitleById.get(assignment.chore_id) || `Chore #${assignment.chore_id}`,
+          assignee: userNameById.get(assignment.assigned_to) || `User #${assignment.assigned_to}`,
+          dueDate: assignment.due_date,
+          type: isOverdue ? "overdue" : "due_soon",
+        };
+
+        if (isOverdue) {
+          overdueItems.push(item);
+          return;
+        }
+
+        if (!isCompleted && dueDate >= startOfToday && dueDate <= dueSoonEnd) {
+          dueSoonItems.push(item);
+        }
+      });
+
+      overdueItems.sort(
+        (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+      );
+      dueSoonItems.sort(
+        (a, b) => new Date(a.dueDate).getTime() - new Date(b.dueDate).getTime()
+      );
+
+      const monthStart = new Date(now.getFullYear(), now.getMonth(), 1);
+      const monthEndExclusive = new Date(now.getFullYear(), now.getMonth() + 1, 1);
+
+      const monthAssignments = groupAssignments.filter((assignment) => {
+        const dueDate = new Date(assignment.due_date);
+        return dueDate >= monthStart && dueDate < monthEndExclusive;
+      });
+
+      const completedCount = monthAssignments.filter(
+        (assignment) => assignment.status === "completed"
+      ).length;
+      const totalCount = monthAssignments.length;
+      const completionRate =
+        totalCount > 0 ? Math.round((completedCount / totalCount) * 100) : 0;
+
+      const distributionSource =
+        monthAssignments.length > 0 ? monthAssignments : groupAssignments;
+      const assignmentCountByUser = new Map<number, number>();
+
+      distributionSource.forEach((assignment) => {
+        assignmentCountByUser.set(
+          assignment.assigned_to,
+          (assignmentCountByUser.get(assignment.assigned_to) || 0) + 1
+        );
+      });
+
+      const distribution: ChoreDistributionSlice[] = Array.from(
+        assignmentCountByUser.entries()
+      )
+        .sort((a, b) => b[1] - a[1])
+        .map(([userId, count], index) => ({
+          memberName: userNameById.get(userId) || `User #${userId}`,
+          count,
+          color: DISTRIBUTION_COLORS[index % DISTRIBUTION_COLORS.length],
+        }));
+
+      setChorePulse({
+        overdueCount: overdueItems.length,
+        dueSoonCount: dueSoonItems.length,
+        completionRate,
+        completedCount,
+        totalCount,
+        monthLabel: getMonthLabel(now),
+        urgentItems: [...overdueItems, ...dueSoonItems],
+        distribution,
+      });
     } catch (error) {
       console.error("Failed to load summary data:", error);
       setTotalExpenses(0);
       setCurrentStreak(0);
       setLeaders([]);
       setUtilities([]);
+      setChorePulse({
+        overdueCount: 0,
+        dueSoonCount: 0,
+        completionRate: 0,
+        completedCount: 0,
+        totalCount: 0,
+        monthLabel: getMonthLabel(new Date()),
+        urgentItems: [],
+        distribution: [],
+      });
     }
   }, []);
 
@@ -151,9 +314,14 @@ export default function SummaryPage() {
     <>
       <div className="flex gap-5 items-stretch">
         <HouseHarmonyCard
-          score={85}
-          percentChange={12}
-          metrics={HARMONY_METRICS}
+          overdueCount={chorePulse.overdueCount}
+          dueSoonCount={chorePulse.dueSoonCount}
+          completionRate={chorePulse.completionRate}
+          completedCount={chorePulse.completedCount}
+          totalCount={chorePulse.totalCount}
+          monthLabel={chorePulse.monthLabel}
+          urgentItems={chorePulse.urgentItems}
+          distribution={chorePulse.distribution}
         />
         <StatsPanel
           totalExpenses={totalExpenses}
