@@ -2,18 +2,35 @@
 
 import { useState } from "react";
 import Link from "next/link";
+import { useRouter } from "next/navigation";
+import { loginWithPassword } from "@/lib/authClient";
 
 export default function LoginPage() {
+  const router = useRouter();
   const [email, setEmail] = useState("");
   const [password, setPassword] = useState("");
   const [showPassword, setShowPassword] = useState(false);
   const [remember, setRemember] = useState(false);
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  const handleLogin = (e: React.FormEvent) => {
+  const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault();
-    // TODO: wire up to auth API
-    console.log("Login:", { email, password, remember });
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      await loginWithPassword(email.trim(), password);
+      router.replace("/");
+      router.refresh();
+    } catch (loginError) {
+      const message = loginError instanceof Error ? loginError.message : "Unable to log in";
+      setError(message);
+    } finally {
+      setIsSubmitting(false);
+    }
   };
+
   return (
     <div className="min-h-screen flex">
 
@@ -62,6 +79,12 @@ export default function LoginPage() {
             Please enter your details to access your sanctuary.
           </p>
 
+          {error ? (
+            <p className="mb-4 rounded-lg border border-red-200 bg-red-50 px-3 py-2 text-sm text-red-700">
+              {error}
+            </p>
+          ) : null}
+
           <form onSubmit={handleLogin} className="space-y-5">
             <div>
               <label className="text-sm font-bold text-on-surface block mb-2">
@@ -109,9 +132,10 @@ export default function LoginPage() {
 
             <button
               type="submit"
+              disabled={isSubmitting}
               className="w-full bg-primary text-white py-4 rounded-xl font-bold text-sm hover:bg-primary-container transition-all active:scale-95 flex items-center justify-center gap-2"
             >
-              Log In
+              {isSubmitting ? "Logging In..." : "Log In"}
               <span className="material-symbols-outlined text-base">arrow_forward</span>
             </button>
           </form>
