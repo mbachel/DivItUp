@@ -66,7 +66,10 @@ def me(current_user: user_model.Users = Depends(get_current_user)):
 
 
 @router.post("/logout")
-def logout(response: Response):
+def logout(
+    response: Response,
+    _current_user: user_model.Users = Depends(get_current_user),
+):
     clear_auth_cookie(response)
     response.status_code = status.HTTP_200_OK
     return {"detail": "Logged out"}
