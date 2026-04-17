@@ -1,5 +1,6 @@
-from fastapi import FastAPI
+from fastapi import Depends, FastAPI
 from .. import auth as auth_routes
+from .auth import get_current_user
 from . import (
     users,
     groups,
@@ -16,15 +17,18 @@ from . import (
 
 def load_routes(app: FastAPI):
     api_prefix = "/api"
+
+    protected_dependencies = [Depends(get_current_user)]
+
     app.include_router(auth_routes.router, prefix=api_prefix)
-    app.include_router(users.router, prefix=api_prefix)
-    app.include_router(groups.router, prefix=api_prefix)
-    app.include_router(group_members.router, prefix=api_prefix)
-    app.include_router(chores.router, prefix=api_prefix)
-    app.include_router(chore_assignments.router, prefix=api_prefix)
-    app.include_router(expenses.router, prefix=api_prefix)
-    app.include_router(expense_splits.router, prefix=api_prefix)
-    app.include_router(receipts.router, prefix=api_prefix)
-    app.include_router(receipt_items.router, prefix=api_prefix)
-    app.include_router(payments.router, prefix=api_prefix)
-    app.include_router(scan_receipt.router, prefix=api_prefix)
+    app.include_router(users.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(groups.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(group_members.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(chores.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(chore_assignments.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(expenses.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(expense_splits.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(receipts.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(receipt_items.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(payments.router, prefix=api_prefix, dependencies=protected_dependencies)
+    app.include_router(scan_receipt.router, prefix=api_prefix, dependencies=protected_dependencies)

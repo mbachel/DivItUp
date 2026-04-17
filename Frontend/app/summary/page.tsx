@@ -11,8 +11,8 @@ import UtilitiesTracker from "../../components/summary/UtilitiesTracker";
 import type { Leader } from "../../components/summary/Leaderboard";
 import type { Utility } from "../../components/summary/UtilitiesTracker";
 import * as api from "../../lib/apiClient";
+import { resolveActiveMembership } from "@/lib/activeMembership";
 
-const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
 const TRACKED_UTILITY_CATEGORY = "utilities";
 const DUE_SOON_WINDOW_DAYS = 3;
 const DISTRIBUTION_COLORS = [
@@ -91,32 +91,14 @@ export default function SummaryPage() {
 
   const loadSummaryData = useCallback(async () => {
     try {
-      const group = await api.fetchGroupByInviteCode(CURRENT_GROUP_INVITE_CODE);
-
-      if (!group) {
-        console.error(`Group with invite code ${CURRENT_GROUP_INVITE_CODE} not found`);
-        setTotalExpenses(0);
-        setCurrentStreak(0);
-        setLeaders([]);
-        setUtilities([]);
-        setChorePulse({
-          overdueCount: 0,
-          dueSoonCount: 0,
-          completionRate: 0,
-          completedCount: 0,
-          totalCount: 0,
-          monthLabel: getMonthLabel(new Date()),
-          urgentItems: [],
-          distribution: [],
-        });
-        return;
-      }
+      const context = await resolveActiveMembership();
+      const group = context.activeGroup;
+      const membersInGroup = context.membersInActiveGroup;
 
       setCurrentStreak(Number(group.streak ?? 0));
 
-      const [expenses, groupMembers, users, chores, assignments] = await Promise.all([
+      const [expenses, users, chores, assignments] = await Promise.all([
         api.fetchExpenses(group.id),
-        api.fetchGroupMembers(),
         api.fetchUsers(),
         api.fetchChores(group.id),
         api.fetchChoreAssignments(),
@@ -127,10 +109,6 @@ export default function SummaryPage() {
       }, 0);
 
       setTotalExpenses(summedTotal);
-
-      const membersInGroup = groupMembers.filter(
-        (member) => member.group_id === group.id
-      );
 
       const groupUserIds = new Set(membersInGroup.map((member) => member.user_id));
 

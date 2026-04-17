@@ -6,9 +6,7 @@ import ChoreColumn from "../../components/chores/ChoreColumn";
 import { useState, useEffect, useRef } from "react";
 import * as api from "../../lib/apiClient";
 import type { Chore } from "../../components/chores/ChoreCard";
-
-const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
-const CURRENT_USER_ID = 1002;
+import { notifyPointsUpdated, resolveActiveMembership } from "@/lib/activeMembership";
 
 /**
  * returns how many whole days remain until `dueDate`
@@ -101,6 +99,7 @@ export default function ChoresPage() {
   const [groupMembers, setGroupMembers] = useState<api.GroupMemberBackend[]>([]);
   const [users, setUsers] = useState<api.UserBackend[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<number | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
 
   const [undoToast, setUndoToast] = useState<{
     assignmentId: number;
@@ -132,18 +131,15 @@ export default function ChoresPage() {
     setError("");
 
     try {
-      const group = await api.fetchGroupByInviteCode(CURRENT_GROUP_INVITE_CODE);
+      const context = await resolveActiveMembership();
+      const group = context.activeGroup;
+      const membersInGroup = context.membersInActiveGroup;
+      const userId = context.currentUser.id;
+      setCurrentUserId(userId);
 
-      if (!group) {
-        throw new Error(
-          `Group with invite code ${CURRENT_GROUP_INVITE_CODE} not found`
-        );
-      }
-
-      const [chores, allAssignments, groupMembers, users] = await Promise.all([
+      const [chores, allAssignments, users] = await Promise.all([
         api.fetchChores(group.id),
         api.fetchChoreAssignments(),
-        api.fetchGroupMembers(),
         api.fetchUsers(),
       ]);
 
@@ -151,9 +147,7 @@ export default function ChoresPage() {
       // this is what drives the "X days left" label on each card
       const groupChoreIdSet = new Set(chores.map((c) => Number(c.id)));
       const groupUserIdSet = new Set(
-        groupMembers
-          .filter((m) => m.group_id === group.id)
-          .map((m) => m.user_id)
+        membersInGroup.map((m) => m.user_id)
       );
 
       const choreEarliestDueMap = new Map<number, string>();
@@ -196,15 +190,13 @@ export default function ChoresPage() {
       );
       setAllChores(mapped);
       setAssignments(allAssignments);
-      setGroupMembers(groupMembers.filter((m) => m.group_id === group.id));
+      setGroupMembers(membersInGroup);
       setUsers(users);
       setCurrentGroupId(group.id);
 
       // hang onto the current user's member record so we can read and update
       // their points total when a chore is completed
-      const member = groupMembers.find(
-        (m) => m.group_id === group.id && m.user_id === CURRENT_USER_ID
-      ) ?? null;
+      const member = membersInGroup.find((m) => m.user_id === userId) ?? null;
       setCurrentMember(member);
 
       // filter down to active assignments for everyone in the group —
@@ -313,8 +305,9 @@ export default function ChoresPage() {
         const updatedMember = await api.updateGroupMember(member.id, {
           points: member.points + action.pointsAwarded,
         });
-        if (updatedMember && member.user_id === CURRENT_USER_ID) {
+        if (updatedMember && currentUserId !== null && member.user_id === currentUserId) {
           setCurrentMember(updatedMember);
+          notifyPointsUpdated(Number(updatedMember.points ?? 0));
         }
       }
     }
@@ -334,6 +327,17 @@ export default function ChoresPage() {
   const handleUndo = () => {
     if (!undoToast || !pendingActionRef.current) return;
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    const pendingAction = pendingActionRef.current;
+
+    if (
+      pendingAction.action === "complete" &&
+      currentUserId !== null &&
+      pendingAction.assignedUserId === currentUserId &&
+      currentMember
+    ) {
+      notifyPointsUpdated(Number(currentMember.points ?? 0));
+    }
+
     const { previousAssignments, previousChores } = pendingActionRef.current;
     setAssignments(previousAssignments);
     setAllChores(previousChores);
@@ -392,6 +396,16 @@ export default function ChoresPage() {
       action: "complete",
       pointsAwarded,
     });
+
+    if (
+      currentMember &&
+      currentUserId !== null &&
+      assignment.assigned_to === currentUserId &&
+      pointsAwarded > 0
+    ) {
+      notifyPointsUpdated(Number(currentMember.points + pointsAwarded));
+    }
+
     scheduleCommit();
   };
 

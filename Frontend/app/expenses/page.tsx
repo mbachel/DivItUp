@@ -7,9 +7,8 @@ import type { BackendExpense } from "../../components/expenses/ExpenseTable";
 import { useState, useEffect, useCallback } from "react";
 import * as api from "../../lib/apiClient";
 import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
+import { resolveActiveMembership } from "@/lib/activeMembership";
 
-const CURRENT_USER_ID = 1002;
-const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
 const BACKEND_CATEGORIES = new Set([
   "rent",
   "groceries",
@@ -70,6 +69,7 @@ function normalizeExpenseCategory(input?: string | null): string {
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<BackendExpense[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<number | null>(null);
+  const [currentUserId, setCurrentUserId] = useState<number | null>(null);
   const [groupMemberUserIds, setGroupMemberUserIds] = useState<number[]>([]);
   const [splitMembersByExpense, setSplitMembersByExpense] = useState<Record<number, string[]>>({});
   const [splitRowsByExpense, setSplitRowsByExpense] = useState<
@@ -125,28 +125,21 @@ export default function ExpensesPage() {
     setError("");
 
     try {
-      const group = await api.fetchGroupByInviteCode(CURRENT_GROUP_INVITE_CODE);
-
-      if (!group) {
-        throw new Error(
-          `Group with invite code ${CURRENT_GROUP_INVITE_CODE} not found`
-        );
-      }
+      const context = await resolveActiveMembership();
+      const group = context.activeGroup;
+      const allMembersInGroup = context.membersInActiveGroup;
 
       setCurrentGroupId(group.id);
+      setCurrentUserId(context.currentUser.id);
 
-      const [data, allGroupMembers, allUsers, allExpenseSplits] = await Promise.all([
+      const [data, allUsers, allExpenseSplits] = await Promise.all([
         api.fetchExpenses(group.id),
-        api.fetchGroupMembers(),
         api.fetchUsers(),
         api.fetchExpenseSplits(),
       ]);
 
-      const allMembersInGroup = allGroupMembers.filter(
-        (member) => member.group_id === group.id
-      );
       const membersInGroup = allMembersInGroup.filter(
-        (member) => member.user_id !== CURRENT_USER_ID
+        (member) => member.user_id !== context.currentUser.id
       );
       const userById = new Map(allUsers.map((user) => [user.id, user]));
       const expenseIdSet = new Set(data.map((expense) => expense.id));
@@ -212,15 +205,15 @@ export default function ExpensesPage() {
     splitType: "equal" | "custom";
     splits: SplitInput[];
   }) => {
-    if (!currentGroupId) {
-      setError("Group is not loaded yet.");
+    if (!currentGroupId || !currentUserId) {
+      setError("Your account context is not loaded yet.");
       return;
     }
 
     try {
       const payload: api.ExpenseCreatePayload = {
         group_id: currentGroupId,
-        paid_by: CURRENT_USER_ID,
+        paid_by: currentUserId,
         title: expense.name,
         total_amount: expense.amount,
         split_type: expense.splitType,
@@ -243,15 +236,15 @@ export default function ExpensesPage() {
   };
 
   const handleScan = useCallback(async (receipt: ScannedReceipt, receiptId: number) => {
-    if (!currentGroupId) {
-      setError("Group is not loaded yet.");
+    if (!currentGroupId || !currentUserId) {
+      setError("Your account context is not loaded yet.");
       return;
     }
 
     try {
       const payload: api.ExpenseCreatePayload = {
         group_id: currentGroupId,
-        paid_by: CURRENT_USER_ID,
+        paid_by: currentUserId,
         title: receipt.storeName || "Scanned Receipt",
         total_amount: receipt.totalAmount,
         split_type: "equal",
@@ -273,7 +266,7 @@ export default function ExpensesPage() {
       setError("Error creating expense from receipt");
       console.error(err);
     }
-  }, [createExpenseWithSplits, currentGroupId, groupMemberUserIds]);
+  }, [createExpenseWithSplits, currentGroupId, currentUserId, groupMemberUserIds]);
 
   return (
     <>
@@ -299,7 +292,7 @@ export default function ExpensesPage() {
             <ReceiptUploader
               onScan={handleScan}
               groupId={currentGroupId ?? 0}
-              userId={CURRENT_USER_ID}
+              userId={currentUserId ?? 0}
             />
             <ManualEntryForm onAdd={handleManualAdd} members={manualSplitMembers} />
           </div>

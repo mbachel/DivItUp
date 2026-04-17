@@ -7,16 +7,12 @@ import SettlementHealth from "@/components/SettlementHealth";
 import {
   fetchChores,
   fetchChoreAssignments,
-  fetchGroupMembers,
   fetchUsers,
   fetchExpenses,
   fetchExpenseSplits,
   fetchPayments,
 } from "@/lib/apiClient";
-
-// TODO: Replace with real auth/session values later
-const CURRENT_GROUP_ID = 2002;
-const CURRENT_USER_ID = 1002;
+import { resolveActiveMembership } from "@/lib/activeMembership";
 
 type DashboardChoreEntry = {
   timeLabel: string;
@@ -59,22 +55,22 @@ export default function DashboardPage() {
       try {
         setLoading(true);
 
-        const [groupMembers, chores, assignments, users, expenses, splits, payments] =
+        const context = await resolveActiveMembership();
+        const currentGroupId = context.activeGroup.id;
+        const currentUserId = context.currentUser.id;
+
+        const [chores, assignments, users, expenses, splits, payments] =
           await Promise.all([
-            fetchGroupMembers(),
-            fetchChores(CURRENT_GROUP_ID),
+            fetchChores(currentGroupId),
             fetchChoreAssignments(),
             fetchUsers(),
-            fetchExpenses(CURRENT_GROUP_ID),
+            fetchExpenses(currentGroupId),
             fetchExpenseSplits(),
             fetchPayments().catch(() => []),
           ]);
 
         // ── Restricted check ──────────────────────────────────────
-        const currentGroupMember = groupMembers.find(
-          (m) => m.group_id === CURRENT_GROUP_ID && m.user_id === CURRENT_USER_ID
-        );
-        setIsRestricted(Boolean(currentGroupMember?.is_restricted));
+        setIsRestricted(Boolean(context.activeMembership?.is_restricted));
 
         // ── Chores ────────────────────────────────────────────────
         const groupChoreIds = new Set(chores.map((c) => c.id));
@@ -110,7 +106,7 @@ export default function DashboardPage() {
               timeLabel,
               choreName: matchingChore?.title ?? "Unnamed Chore",
               assignee: matchingUser?.full_name ?? "Unknown User",
-              isCurrentUser: assignment.assigned_to === CURRENT_USER_ID,
+              isCurrentUser: assignment.assigned_to === currentUserId,
               isPriority: index === 0,
             };
           }
