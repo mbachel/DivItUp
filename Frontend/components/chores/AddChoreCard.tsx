@@ -42,7 +42,7 @@ export default function AddChoreCard({
   const [success, setSuccess] = useState(false);
   const [error, setError] = useState("");
 
-  // Form fields
+  // local state for each form field
   const [title, setTitle]         = useState("");
   const [frequency, setFrequency] = useState("weekly");
   const [assignedTo, setAssignedTo] = useState<number | "">(
@@ -62,11 +62,11 @@ export default function AddChoreCard({
     setSubmitting(true);
 
     try {
-      // Step 1 — create the chore record
+      // kick off the chore creation first, then we'll attach the assignment
       const chore = await onCreateChore(title.trim(), frequency);
       if (!chore) throw new Error("Failed to create chore.");
 
-      // Step 2 — create the assignment
+      // link the new chore to the selected member with a due date and status
       const assignment = await onCreateAssignment(
         chore.id,
         Number(assignedTo),
@@ -75,7 +75,7 @@ export default function AddChoreCard({
       );
       if (!assignment) throw new Error("Failed to create assignment.");
 
-      // Success — reset form
+      // clear everything out so the form is ready for another entry
       setTitle("");
       setFrequency("weekly");
       setAssignedTo(groupMembers[0]?.user_id ?? "");
@@ -99,7 +99,7 @@ export default function AddChoreCard({
 
   return (
     <div className="bg-white rounded-2xl border border-outline-variant/40 overflow-hidden">
-      {/* Header — always visible */}
+      {/* toggle button is always shown — clicking it opens or closes the form */}
       <button
         onClick={() => { setOpen((o) => !o); setError(""); }}
         className="w-full flex items-center justify-between px-5 py-4 hover:bg-surface-container-low transition-colors"
@@ -119,11 +119,11 @@ export default function AddChoreCard({
         </span>
       </button>
 
-      {/* Collapsible form */}
+      {/* the actual form body, only rendered when the panel is open */}
       {open && (
         <div className="px-5 pb-5 flex flex-col gap-4 border-t border-outline-variant/30">
 
-          {/* Title */}
+          {/* chore name the user types in */}
           <div className="flex flex-col gap-1.5 pt-4">
             <label className="text-[10px] font-bold uppercase tracking-widest text-outline">
               Chore Title
@@ -137,7 +137,7 @@ export default function AddChoreCard({
             />
           </div>
 
-          {/* Frequency */}
+          {/* how often this chore repeats — each option also shows how many points it's worth */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-outline">
               Frequency
@@ -162,7 +162,7 @@ export default function AddChoreCard({
             </div>
           </div>
 
-          {/* Assigned To */}
+          {/* dropdown to pick which group member gets this chore */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-outline">
               Assign To
@@ -180,7 +180,7 @@ export default function AddChoreCard({
             </select>
           </div>
 
-          {/* Due Date */}
+          {/* when this needs to be done by */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-outline">
               Due Date
@@ -193,7 +193,7 @@ export default function AddChoreCard({
             />
           </div>
 
-          {/* Status */}
+          {/* initial status of the assignment */}
           <div className="flex flex-col gap-1.5">
             <label className="text-[10px] font-bold uppercase tracking-widest text-outline">
               Status
@@ -215,14 +215,14 @@ export default function AddChoreCard({
             </div>
           </div>
 
-          {/* Error */}
+          {/* show a friendly error message if something went wrong */}
           {error && (
             <p className="text-xs text-red-600 bg-red-50 border border-red-200 rounded-xl px-3 py-2">
               {error}
             </p>
           )}
 
-          {/* Submit */}
+          {/* submit button switches to a spinner while saving, then a success state */}
           <button
             onClick={handleSubmit}
             disabled={submitting || success}
