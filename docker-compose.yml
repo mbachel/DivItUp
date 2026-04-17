@@ -30,8 +30,6 @@ services:
     depends_on:
       db:
         condition: service_healthy
-      db-seed:
-        condition: service_completed_successfully
     expose:
       - "8000"
     restart: unless-stopped
@@ -41,6 +39,7 @@ services:
     build:
       context: ./Backend
       dockerfile: Dockerfile
+    profiles: ["seed"]
     command:
       - sh
       - -c
