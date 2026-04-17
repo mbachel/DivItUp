@@ -1,13 +1,14 @@
 from sqlalchemy.orm import Session
 from fastapi import HTTPException, status, Response
 from ..models import users as model
+from ..dependencies.security import hash_password
 from sqlalchemy.exc import SQLAlchemyError
 
 def create(db: Session, request):
     new_user = model.Users(
         username=request.username,
         email=request.email,
-        password_hash=request.password_hash,
+        password_hash=hash_password(request.password_hash),
         full_name=request.full_name
     )
     try:
@@ -43,6 +44,8 @@ def update(db: Session, item_id, request):
         if not item.first():
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found!")
         update_data = request.dict(exclude_unset=True)
+        if "password_hash" in update_data and update_data["password_hash"] is not None:
+            update_data["password_hash"] = hash_password(update_data["password_hash"])
         item.update(update_data, synchronize_session=False)
         db.commit()
     except SQLAlchemyError as e:
