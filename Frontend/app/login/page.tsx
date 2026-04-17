@@ -14,21 +14,17 @@ export default function LoginPage() {
     // TODO: wire up to auth API
     console.log("Login:", { email, password, remember });
   };
-  {/*Adding comments for clarity*/}
   return (
     <div className="min-h-screen flex">
 
-      {/* Left — hero image panel */}
       <div className="hidden lg:flex lg:w-[55%] relative overflow-hidden bg-slate-800">
         <img
           src="https://images.unsplash.com/photo-1586023492125-27b2c045efd7?w=1200&auto=format&fit=crop&q=80"
           alt="A warm, harmonious living room"
           className="absolute inset-0 w-full h-full object-cover opacity-80"
         />
-        {/* Overlay gradient */}
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-black/10 to-transparent" />
 
-        {/* Top logo */}
         <Link href="/" className="absolute top-8 left-8 flex items-center gap-2 z-10">
             <img
                 src="/DivItUpLogo.png"
@@ -37,7 +33,6 @@ export default function LoginPage() {
             />
         </Link>
 
-        {/* Bottom text card */}
         <div className="absolute bottom-10 left-8 right-8 z-10">
           <div className="bg-white/15 backdrop-blur-sm rounded-2xl p-6 border border-white/20">
             <h2 className="text-3xl font-extrabold text-white font-headline mb-3 leading-tight">
@@ -51,9 +46,7 @@ export default function LoginPage() {
         </div>
       </div>
 
-      {/* Right — login form */}
       <div className="flex-1 flex flex-col justify-center px-8 md:px-16 lg:px-20 bg-white">
-        {/* Mobile logo */}
         <div className="lg:hidden flex items-center gap-2 mb-10">
           <div className="w-8 h-8 bg-primary rounded-lg flex items-center justify-center">
             <span className="material-symbols-outlined text-white text-lg">home</span>
@@ -70,7 +63,6 @@ export default function LoginPage() {
           </p>
 
           <form onSubmit={handleLogin} className="space-y-5">
-            {/* Email */}
             <div>
               <label className="text-sm font-bold text-on-surface block mb-2">
                 Email Address
@@ -90,17 +82,7 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Password */}
             <div>
-              <div className="flex justify-between items-center mb-2">
-                <label className="text-sm font-bold text-on-surface">Password</label>
-                <button
-                  type="button"
-                  className="text-sm font-bold text-primary hover:underline"
-                >
-                  Forgot Password?
-                </button>
-              </div>
               <div className="relative">
                 <span className="material-symbols-outlined absolute left-4 top-1/2 -translate-y-1/2 text-outline text-base">
                   lock
@@ -125,7 +107,6 @@ export default function LoginPage() {
               </div>
             </div>
 
-            {/* Submit */}
             <button
               type="submit"
               className="w-full bg-primary text-white py-4 rounded-xl font-bold text-sm hover:bg-primary-container transition-all active:scale-95 flex items-center justify-center gap-2"
@@ -136,7 +117,6 @@ export default function LoginPage() {
           </form>
         </div>
 
-        {/* Footer */}
         <p className="text-center text-[10px] text-outline uppercase tracking-widest mt-12">
           © 2026 DivItUp
         </p>

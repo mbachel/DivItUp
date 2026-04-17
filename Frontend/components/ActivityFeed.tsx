@@ -19,7 +19,7 @@ interface ActivityFeedProps {
   activities: ActivityItem[];
   onViewAll?: () => void;
 }
-{/*Adding comments for clarity*/}
+// activity feed highlights recent events with optional amounts and badges
 export default function ActivityFeed({
   activities,
   onViewAll,
@@ -42,7 +42,7 @@ export default function ActivityFeed({
             key={activity.id}
             className="flex items-center gap-4 p-4 hover:bg-surface-container-low rounded-xl transition-colors"
           >
-            {/* Icon */}
+            {/* icon bubble for the activity type */}
             <div
               className="w-10 h-10 rounded-full flex items-center justify-center flex-shrink-0"
               style={{
@@ -55,7 +55,7 @@ export default function ActivityFeed({
               </span>
             </div>
 
-            {/* Content */}
+            {/* main text block with timestamp and optional amount */}
             <div className="flex-grow">
               <p className="text-sm font-bold">{activity.description}</p>
               <p className="text-xs text-outline">
@@ -75,7 +75,7 @@ export default function ActivityFeed({
               </p>
             </div>
 
-            {/* Trailing element */}
+            {/* trailing tag, avatar, or icon depending on the activity */}
             <div className="hidden sm:block flex-shrink-0">
               {activity.tag && (
                 <span className="text-xs font-bold bg-surface-container px-2 py-1 rounded">

@@ -31,13 +31,13 @@ export default function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
     setName("");
     setAmount("");
   };
-  {/*Adding comments for clarity*/}
+  // keep manual entry fast for recurring household costs
   return (
     <div className="bg-white rounded-2xl p-6 border border-outline-variant/40 h-full">
       <h3 className="font-bold text-lg text-on-surface mb-1 font-headline">Manual Entry</h3>
       <p className="text-sm text-outline mb-5">For utilities, rent, or simple logs.</p>
 
-      {/* Expense name */}
+      {/* basic description field for the expense */}
       <div className="mb-4">
         <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
           Expense Name
@@ -51,7 +51,7 @@ export default function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
         />
       </div>
 
-      {/* Amount + Category */}
+      {/* amount and category are captured side by side for quicker input */}
       <div className="grid grid-cols-2 gap-3 mb-4">
         <div>
           <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
@@ -81,7 +81,7 @@ export default function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
         </div>
       </div>
 
-      {/* Split method */}
+      {/* split method toggles how this expense is distributed */}
       <div className="mb-6">
         <label className="text-[10px] font-bold uppercase tracking-widest text-outline block mb-2">
           Split Method
@@ -103,7 +103,7 @@ export default function ManualEntryForm({ onAdd }: ManualEntryFormProps) {
         </div>
       </div>
 
-      {/* Submit */}
+      {/* final action button to add the entry */}
       <button
         onClick={handleSubmit}
         disabled={!name || !amount}
