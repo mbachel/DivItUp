@@ -4,98 +4,98 @@
       "id": 1001,
       "username": "alex_model_seed",
       "email": "alex.model.seed@divitup.test",
-      "password_hash": "fake_hash_alex",
+      "password_hash": "$pbkdf2-sha256$29000$hRACQMj5n5NSqlVqzTnHuA$m69BR36fZ4hgiu03OxO.ypKiQgZFIdNgf1ap39kzf0s",
       "full_name": "Alex Rivera"
     },
     {
       "id": 1002,
       "username": "blair_model_seed",
       "email": "blair.model.seed@divitup.test",
-      "password_hash": "fake_hash_blair",
+      "password_hash": "$pbkdf2-sha256$29000$SwkhBIBQau09J8Q4p5QSAg$7vAkSp3CUiBiWiLF.l45vakiIAGvNuYYWTA6TWGZe90",
       "full_name": "Blair Thompson"
     },
     {
       "id": 1003,
       "username": "casey_model_seed",
       "email": "casey.model.seed@divitup.test",
-      "password_hash": "fake_hash_casey",
+      "password_hash": "$pbkdf2-sha256$29000$cS7FuPfeWwshpFQKYUzpXQ$1/qb8uTEIeHagJLBRCWQFTyzlUuVHKYoECLCXsVQhLA",
       "full_name": "Casey Nguyen"
     },
     {
       "id": 1004,
       "username": "devon_model_seed",
       "email": "devon.model.seed@divitup.test",
-      "password_hash": "fake_hash_devon",
+      "password_hash": "$pbkdf2-sha256$29000$Wqu1NuZ8b20tRSjFmDPm/A$W.6XY9i5Qx1HgsTNUmMBeR/2OEOTDbU4ipt08tgoAkQ",
       "full_name": "Devon Patel"
     },
     {
       "id": 1005,
       "username": "agam_model_seed",
       "email": "agam.model.seed@divitup.test",
-      "password_hash": "fake_hash_agam",
+      "password_hash": "$pbkdf2-sha256$29000$D6EUQqg1RohRqpVyzjmHcA$moUOGdXKwL0nM/wCHv8y7eeashLlzyodY7EJWXHK5M4",
       "full_name": "Agam Bajaj"
     },
     {
       "id": 1006,
       "username": "soumil_model_seed",
       "email": "soumil.model.seed@divitup.test",
-      "password_hash": "fake_hash_soumil",
+      "password_hash": "$pbkdf2-sha256$29000$vxcipLR2LqUUIqQ0ppSSEg$2zp.zcMr2OXdqO/VoUQt2P0OIoXXEOcjy5KM8L0/UJ8",
       "full_name": "Soumil Kothari"
     },
     {
       "id": 1007,
       "username": "emery_model_seed",
       "email": "emery.model.seed@divitup.test",
-      "password_hash": "fake_hash_emery",
+      "password_hash": "$pbkdf2-sha256$29000$JYSQklKqtZaScm4tRUhpDQ$bVvYTWot4Jxi8C4XCgH0mk08YODrSoUlew2JmX2HxZw",
       "full_name": "Emery Brooks"
     },
     {
       "id": 1008,
       "username": "frankie_model_seed",
       "email": "frankie.model.seed@divitup.test",
-      "password_hash": "fake_hash_frankie",
+      "password_hash": "$pbkdf2-sha256$29000$1ppTCgHg3Ptfa825FyIkZA$WoYaXMRDvbTrFD2JI5c8lL1h1VQfJk1GhckxHiKkCZg",
       "full_name": "Frankie Cole"
     },
     {
       "id": 1009,
       "username": "jordan_model_seed",
       "email": "jordan.model.seed@divitup.test",
-      "password_hash": "fake_hash_jordan",
+      "password_hash": "$pbkdf2-sha256$29000$Z2yNMSZECAGgdE7pHUPIOQ$p3xjQ5Y6B2r8Qu6x1NTaH5zpkXgiqiBrp8C7TxUK.Z8",
       "full_name": "Jordan Kim"
     },
     {
       "id": 1010,
       "username": "taylor_model_seed",
       "email": "taylor.model.seed@divitup.test",
-      "password_hash": "fake_hash_taylor",
+      "password_hash": "$pbkdf2-sha256$29000$vvcew1grBaAUwvi/FyLk/A$4k5jf90MqFVFrO6t2axMnIGbXIGRUvqFBtvAq/dWjic",
       "full_name": "Taylor Green"
     },
     {
       "id": 1011,
       "username": "mattyb",
       "email": "mbacheld@charlotte.edu",
-      "password_hash": "Bachelder123",
+      "password_hash": "$pbkdf2-sha256$29000$H.P833sP4XxPKeVci9H63w$f/ExLV2DbxKLSl5iG2VV6NPwHth2jLWJOnG7kdC8zAc",
       "full_name": "Matthew Bachelder"
     },
     {
       "id": 1012,
       "username": "kotharisoumil11",
       "email": "skothar6@charlotte.edu",
-      "password_hash": "Kothari123",
+      "password_hash": "$pbkdf2-sha256$29000$xJgz5lxr7Z2z1rrXuvc.Zw$tVDmGHVRZZNKeU5HQM8xkllclgq7kHUZ6F4QF7/RvE0",
       "full_name": "Soumil Kothari"
     },
     {
       "id": 1013,
       "username": "jessica",
       "email": "jmathe23@charlotte.edu",
-      "password_hash": "Mathew123",
+      "password_hash": "$pbkdf2-sha256$29000$BgDA.P8f4/xfS4nR2huDUA$lIvCoSn95bwCwCVO.50G9Mq3rSuupMvrq2WIpAHFKZQ",
       "full_name": "Jessica Mathew"
     },
     {
       "id": 1014,
       "username": "ags_bajs",
       "email": "abajaj2@charlotte.edu",
-      "password_hash": "Bajaj123",
+      "password_hash": "$pbkdf2-sha256$29000$u3fO2TunVCqFcO7duzdGCA$fywsTIAdwobj0/hG32PyS5Q8z3QPwyAQDB1Mk/fmJAo",
       "full_name": "Agam Bajaj"
     }
   ],
