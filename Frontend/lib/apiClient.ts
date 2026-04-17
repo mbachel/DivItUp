@@ -19,6 +19,7 @@ export interface GroupMemberBackend {
   user_id: number;
   role: string;
   is_restricted: boolean;
+  points: number;
 }
 
 export interface UserBackend {
@@ -153,6 +154,30 @@ export async function fetchUsers(): Promise<UserBackend[]> {
   }
 
   return await res.json();
+}
+
+export async function updateGroupMember(
+  id: number,
+  payload: Partial<{ role: string; is_restricted: boolean; points: number }>
+): Promise<GroupMemberBackend | null> {
+  try {
+    const res = await fetch(`/api/group-members/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Update group member failed: ${res.status} ${res.statusText}`
+      );
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error updating group member:", err);
+    return null;
+  }
 }
 
 // ============ Expenses API ============

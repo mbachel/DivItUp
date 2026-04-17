@@ -11,7 +11,22 @@ import type { Chore } from "../../components/chores/ChoreCard";
 const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
 const CURRENT_USER_ID = 1002;
 
-function mapBackendChoreToUI(backendChore: api.ChoreBackend): Chore {
+/**
+ * Returns how many whole days remain until `dueDate`.
+ * Negative values mean the chore is overdue.
+ * 0 means due today (less than 24 h away).
+ */
+function computeDaysLeft(dueDate: string): number {
+  const msPerDay = 1000 * 60 * 60 * 24;
+  const diffMs = new Date(dueDate).getTime() - Date.now();
+  // ceil so that "23 h 59 m left" shows as 1 day, not 0
+  return Math.ceil(diffMs / msPerDay);
+}
+
+function mapBackendChoreToUI(
+  backendChore: api.ChoreBackend,
+  dueDate?: string
+): Chore {
   const pointsMap: Record<string, number> = {
     daily: 50,
     weekly: 150,
@@ -31,7 +46,10 @@ function mapBackendChoreToUI(backendChore: api.ChoreBackend): Chore {
           : "Due This Month",
     assignee: "Unassigned",
     status: "pending",
-    daysLeft: 1,
+    // Use the real due date from the assignment when available; fall
+    // back to undefined so ChoreCard omits the label rather than
+    // showing a stale/fake number.
+    daysLeft: dueDate !== undefined ? computeDaysLeft(dueDate) : undefined,
   };
 }
 
@@ -73,6 +91,7 @@ export default function ChoresPage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
   const [assignments, setAssignments] = useState<api.ChoreAssignmentBackend[]>([]);
+  const [currentMember, setCurrentMember] = useState<api.GroupMemberBackend | null>(null);
 
   const [nextChoreTitle, setNextChoreTitle] = useState("No chores assigned");
   const [nextChoreDueText, setNextChoreDueText] = useState("You're all caught up.");
@@ -98,24 +117,56 @@ export default function ChoresPage() {
         api.fetchUsers(),
       ]);
 
-      const mapped = chores.map(mapBackendChoreToUI);
+      // Build a map of chore_id → earliest non-completed due date across
+      // all members of this group.  This drives the "X days left" label
+      // on each ChoreCard regardless of which specific user is assigned.
+      const groupChoreIdSet = new Set(chores.map((c) => Number(c.id)));
+      const groupUserIdSet = new Set(
+        groupMembers
+          .filter((m) => m.group_id === group.id)
+          .map((m) => m.user_id)
+      );
+
+      const choreEarliestDueMap = new Map<number, string>();
+      for (const assignment of allAssignments) {
+        if (
+          !groupChoreIdSet.has(Number(assignment.chore_id)) ||
+          !groupUserIdSet.has(assignment.assigned_to) ||
+          assignment.status.toLowerCase() === "completed"
+        ) {
+          continue;
+        }
+
+        const choreId = Number(assignment.chore_id);
+        const existing = choreEarliestDueMap.get(choreId);
+
+        if (
+          existing === undefined ||
+          new Date(assignment.due_date).getTime() < new Date(existing).getTime()
+        ) {
+          choreEarliestDueMap.set(choreId, assignment.due_date);
+        }
+      }
+
+      const mapped = chores.map((chore) =>
+        mapBackendChoreToUI(chore, choreEarliestDueMap.get(Number(chore.id)))
+      );
       setAllChores(mapped);
       setAssignments(allAssignments);
 
-      const groupUserIds = new Set(
-        groupMembers
-          .filter((member) => member.group_id === group.id)
-          .map((member) => member.user_id)
-      );
+      // Store the current user's group member record so handleChoreComplete
+      // can read their current points total and award new ones.
+      const member = groupMembers.find(
+        (m) => m.group_id === group.id && m.user_id === CURRENT_USER_ID
+      ) ?? null;
+      setCurrentMember(member);
 
-      const groupChoreIds = new Set(
-        chores.map((chore) => Number(chore.id))
-      );
-
+      // Narrow to assignments for the current user within this group
+      // (reuse the sets already built above for the due-date map).
       const userAssignments = allAssignments
-        .filter((assignment) => groupUserIds.has(assignment.assigned_to))
+        .filter((assignment) => groupUserIdSet.has(assignment.assigned_to))
         .filter((assignment) => assignment.assigned_to === CURRENT_USER_ID)
-        .filter((assignment) => groupChoreIds.has(Number(assignment.chore_id)))
+        .filter((assignment) => groupChoreIdSet.has(Number(assignment.chore_id)))
         .filter((assignment) => assignment.status.toLowerCase() !== "completed");
 
       const overdueAssignments = userAssignments
@@ -197,6 +248,19 @@ export default function ChoresPage() {
             chore.id === choreId ? { ...chore, status: "complete" } : chore
           )
         );
+
+        // Award points — look up the chore's point value and add it to
+        // the current user's group_members points total.
+        const completedChore = allChores.find((c) => c.id === choreId);
+        if (completedChore && currentMember) {
+          const newPoints = (currentMember.points ?? 0) + completedChore.points;
+          const updatedMember = await api.updateGroupMember(currentMember.id, {
+            points: newPoints,
+          });
+          // Keep local currentMember in sync so rapid completions accumulate
+          // correctly without waiting for the full reload.
+          if (updatedMember) setCurrentMember(updatedMember);
+        }
 
         // Wait for animation to complete
         await new Promise((resolve) => setTimeout(resolve, 1000));
