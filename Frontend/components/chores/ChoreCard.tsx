@@ -1,6 +1,7 @@
 "use client";
 
 import { useState } from "react";
+import UserAvatar from "@/components/UserAvatar";
 
 export interface Chore {
   id: string;
@@ -9,7 +10,7 @@ export interface Chore {
   dueLabel: string;
   daysLeft?: number;
   assignee: string;
-  assigneeAvatar?: string;
+  assigneeUsername?: string;
   status: "pending" | "inprogress" | "complete" | "skipped";
 }
 
@@ -95,10 +96,13 @@ export default function ChoreCard({ chore, onComplete, onSkip }: ChoreCardProps)
       {/* assignee avatar on the left, action buttons on the right */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          {/* initials-based avatar since we don't have profile pictures yet */}
-          <div className="w-7 h-7 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">
-            {chore.assignee.slice(0, 2).toUpperCase()}
-          </div>
+          <UserAvatar
+            username={chore.assigneeUsername}
+            fullName={chore.assignee}
+            size={28}
+            fallbackClassName="text-[10px]"
+            alt={`${chore.assignee} profile`}
+          />
           {chore.status === "inprogress" && (
             <span className="text-xs font-bold text-outline uppercase tracking-wider">
               {chore.assignee}

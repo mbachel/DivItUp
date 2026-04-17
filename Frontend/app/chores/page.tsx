@@ -23,7 +23,9 @@ function computeDaysLeft(dueDate: string): number {
 function mapBackendChoreToUI(
   backendChore: api.ChoreBackend,
   dueDate?: string,
-  assignmentStatus?: string
+  assignmentStatus?: string,
+  assigneeName?: string,
+  assigneeUsername?: string
 ): Chore {
   const pointsMap: Record<string, number> = {
     daily: 50,
@@ -44,7 +46,8 @@ function mapBackendChoreToUI(
           : backendChore.frequency === "one_time"
             ? "One Time"
             : "Due This Month",
-    assignee: "Unassigned",
+    assignee: assigneeName ?? "Unassigned",
+    assigneeUsername,
     status:
       assignmentStatus === "completed"
         ? "complete"
@@ -180,14 +183,51 @@ export default function ChoresPage() {
         }
       }
 
+      // choose one representative assignment per chore so each card can show
+      // who is currently assigned along with their profile avatar.
+      const choreAssigneeMap = new Map<number, api.ChoreAssignmentBackend>();
+      for (const assignment of allAssignments) {
+        const choreId = Number(assignment.chore_id);
+        if (!groupChoreIdSet.has(choreId) || !groupUserIdSet.has(assignment.assigned_to)) {
+          continue;
+        }
+
+        const existing = choreAssigneeMap.get(choreId);
+        if (!existing) {
+          choreAssigneeMap.set(choreId, assignment);
+          continue;
+        }
+
+        const existingDone =
+          existing.status.toLowerCase() === "completed" ||
+          existing.status.toLowerCase() === "skipped";
+        const nextDone =
+          assignment.status.toLowerCase() === "completed" ||
+          assignment.status.toLowerCase() === "skipped";
+
+        // Prefer active assignments, then earliest due date.
+        if ((existingDone && !nextDone) ||
+            (existingDone === nextDone &&
+              new Date(assignment.due_date).getTime() < new Date(existing.due_date).getTime())) {
+          choreAssigneeMap.set(choreId, assignment);
+        }
+      }
+
+      const userById = new Map(users.map((user) => [user.id, user]));
+
       // include every chore in the group, not just the ones assigned to the current user
-      const mapped = chores.map((chore) =>
-        mapBackendChoreToUI(
+      const mapped = chores.map((chore) => {
+        const assignment = choreAssigneeMap.get(Number(chore.id));
+        const assignee = assignment ? userById.get(assignment.assigned_to) : undefined;
+
+        return mapBackendChoreToUI(
           chore,
           choreEarliestDueMap.get(Number(chore.id)),
-          choreUserStatusMap.get(Number(chore.id))
-        )
-      );
+          assignment?.status ?? choreUserStatusMap.get(Number(chore.id)),
+          assignee?.full_name ?? assignee?.username,
+          assignee?.username
+        );
+      });
       setAllChores(mapped);
       setAssignments(allAssignments);
       setGroupMembers(membersInGroup);
