@@ -1,8 +1,11 @@
 "use client";
 
+import UserAvatar from "@/components/UserAvatar";
+
 export interface Leader {
   id: string;
   name: string;
+  username: string;
   subtitle: string;
   points: number;
   isCurrentUser?: boolean;
@@ -52,19 +55,14 @@ export default function Leaderboard({ leaders }: DivItUpLeadersProps) {
                 >
                   {rank}
                 </span>
-                <div
-                  className={`w-10 h-10 rounded-full flex items-center justify-center text-sm font-bold ${
-                    leader.isCurrentUser
-                      ? "bg-white/20 text-white"
-                      : "bg-surface-container text-on-surface"
-                  }`}
-                >
-                  {leader.name
-                    .split(" ")
-                    .map((n) => n[0])
-                    .join("")
-                    .slice(0, 2)}
-                </div>
+                <UserAvatar
+                  username={leader.username}
+                  fullName={leader.name}
+                  size={40}
+                  className={leader.isCurrentUser ? "ring-2 ring-white/25" : ""}
+                  fallbackClassName="text-sm"
+                  alt={`${leader.name} profile`}
+                />
               </div>
 
               <div className="flex-1">

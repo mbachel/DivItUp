@@ -126,6 +126,7 @@ export default function SummaryPage() {
         .map((user) => ({
           id: String(user.id),
           name: user.full_name,
+          username: user.username,
           subtitle: roleByUserId.get(user.id) === "admin" ? "Admin" : "Member",
           points: Number(pointsByUserId.get(user.id) ?? 0),
         }))

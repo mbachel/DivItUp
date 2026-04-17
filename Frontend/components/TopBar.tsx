@@ -1,11 +1,11 @@
 "use client";
 
-import Image from "next/image";
 import { usePathname, useRouter } from "next/navigation";
 import { CiLogout } from "react-icons/ci";
 import { MdStar } from "react-icons/md";
 import { useState, useEffect, useCallback } from "react";
 import { logout } from "@/lib/authClient";
+import UserAvatar from "@/components/UserAvatar";
 import {
   POINTS_UPDATED_EVENT,
   resolveActiveMembership,
@@ -15,14 +15,20 @@ export default function TopBar() {
   const router = useRouter();
   const pathname = usePathname();
   const [points, setPoints] = useState<number>(0);
+  const [currentUsername, setCurrentUsername] = useState<string>("");
+  const [currentFullName, setCurrentFullName] = useState<string>("");
 
   const loadPoints = useCallback(async () => {
     try {
       const context = await resolveActiveMembership();
       setPoints(Number(context.activeMembership.points ?? 0));
+      setCurrentUsername(context.currentUser.username);
+      setCurrentFullName(context.currentUser.full_name);
     } catch (error) {
       console.error("Failed to load points:", error);
       setPoints(0);
+      setCurrentUsername("");
+      setCurrentFullName("");
     }
   }, []);
 
@@ -94,15 +100,14 @@ export default function TopBar() {
           <CiLogout className="text-[#007B8C] text-2xl font-bold" />
         </button>
 
-        <div className="w-10 h-10 rounded-full overflow-hidden ring-2 ring-primary/20 shrink-0">
-          <Image
-            src="/Mogistan.jpg"
-            alt="User profile"
-            width={40}
-            height={40}
-            className="object-cover"
-          />
-        </div>
+        <UserAvatar
+          username={currentUsername}
+          fullName={currentFullName}
+          size={40}
+          className="ring-2 ring-primary/20"
+          fallbackClassName="text-xs"
+          alt="User profile"
+        />
       </div>
     </header>
   );
