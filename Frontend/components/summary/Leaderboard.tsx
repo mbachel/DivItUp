@@ -12,12 +12,14 @@ interface DivItUpLeadersProps {
   leaders: Leader[];
 }
 
-// Standard competition ranking: 1, 1, 3 (ties share the same rank,
-// next rank skips ahead by the number of tied entries).
-// Within the same rank, page.tsx already sorted alphabetically.
+// dense ranking so ties don't cause gaps — 750, 700, 700, 600 becomes 1, 2, 2, 3
+// page.tsx handles the alphabetical sort within the same tier before this runs
 function computeRank(leaders: Leader[], index: number): number {
   const points = leaders[index].points;
-  return leaders.filter((l) => l.points > points).length + 1;
+  const uniqueHigherTiers = new Set(
+    leaders.filter((l) => l.points > points).map((l) => l.points)
+  );
+  return uniqueHigherTiers.size + 1;
 }
 
 export default function Leaderboard({ leaders }: DivItUpLeadersProps) {

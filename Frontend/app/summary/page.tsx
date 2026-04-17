@@ -138,7 +138,7 @@ export default function SummaryPage() {
         membersInGroup.map((member) => [member.user_id, member.role])
       );
 
-      // Points live on group_members, not on users
+      // points are stored on group_members rows, not on the users table
       const pointsByUserId = new Map(
         membersInGroup.map((member) => [member.user_id, member.points])
       );

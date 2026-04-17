@@ -10,7 +10,7 @@ interface StatsPanelProps {
 export default function StatsPanel({ totalExpenses, choresDoneOnTime }: StatsPanelProps) {
   return (
     <div className="flex flex-col gap-4 w-72 flex-shrink-0">
-      {/* Total shared expenses */}
+      {/* total shared expenses card */}
       <div className="bg-primary-container text-on-primary-container rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="w-10 h-10 bg-white/20 rounded-full flex items-center justify-center">
@@ -28,7 +28,7 @@ export default function StatsPanel({ totalExpenses, choresDoneOnTime }: StatsPan
         <p className="text-sm text-white/70 font-medium">Total Shared Expenses</p>
       </div>
 
-      {/* Current streak */}
+      {/* streak card */}
       <div className="bg-tertiary-fixed rounded-2xl p-6">
         <div className="flex items-center justify-between mb-4">
           <div className="w-10 h-10 bg-white/50 rounded-full flex items-center justify-center">
