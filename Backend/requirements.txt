@@ -9,3 +9,4 @@ python-jose[cryptography]
 python-multipart
 requests
 mindee>=4.35.1
+pytest
