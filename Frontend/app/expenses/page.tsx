@@ -10,12 +10,115 @@ import type { ScannedReceipt } from "../../components/expenses/ReceiptUploader";
 
 const CURRENT_USER_ID = 1002;
 const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
+const BACKEND_CATEGORIES = new Set([
+  "rent",
+  "groceries",
+  "utilities",
+  "subscription",
+  "other",
+]);
+
+interface SplitInput {
+  userId: number;
+  amountOwed: number;
+}
+
+function toCents(amount: number): number {
+  return Math.round(amount * 100);
+}
+
+function toDollars(cents: number): number {
+  return Number((cents / 100).toFixed(2));
+}
+
+function splitCentsEvenly(totalAmount: number, userIds: number[]): SplitInput[] {
+  if (userIds.length === 0) {
+    return [];
+  }
+
+  const totalCents = toCents(totalAmount);
+  const base = Math.floor(totalCents / userIds.length);
+  let remainder = totalCents % userIds.length;
+
+  return userIds.map((userId) => {
+    const cents = base + (remainder > 0 ? 1 : 0);
+    if (remainder > 0) {
+      remainder -= 1;
+    }
+    return { userId, amountOwed: toDollars(cents) };
+  });
+}
+
+function normalizeExpenseCategory(input?: string | null): string {
+  if (!input) {
+    return "other";
+  }
+
+  const normalized = input.trim().toLowerCase();
+
+  if (normalized === "grocery") {
+    return "groceries";
+  }
+
+  if (BACKEND_CATEGORIES.has(normalized)) {
+    return normalized;
+  }
+
+  return "other";
+}
 
 export default function ExpensesPage() {
   const [expenses, setExpenses] = useState<BackendExpense[]>([]);
   const [currentGroupId, setCurrentGroupId] = useState<number | null>(null);
+  const [groupMemberUserIds, setGroupMemberUserIds] = useState<number[]>([]);
+  const [splitMembersByExpense, setSplitMembersByExpense] = useState<Record<number, string[]>>({});
+  const [splitRowsByExpense, setSplitRowsByExpense] = useState<
+    Record<number, api.ExpenseSplitBackend[]>
+  >({});
+  const [groupMemberOptions, setGroupMemberOptions] = useState<
+    { userId: number; label: string }[]
+  >([]);
+  const [manualSplitMembers, setManualSplitMembers] = useState<
+    { userId: number; label: string }[]
+  >([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState("");
+
+  const createExpenseWithSplits = useCallback(
+    async (payload: api.ExpenseCreatePayload, splits: SplitInput[]) => {
+      if (splits.length === 0) {
+        throw new Error("No split members available for this expense.");
+      }
+
+      const createdExpense = await api.createExpense(payload);
+      if (!createdExpense) {
+        throw new Error("Failed to create expense.");
+      }
+
+      try {
+        const createdSplits = await Promise.all(
+          splits.map((split) =>
+            api.createExpenseSplit({
+              expense_id: createdExpense.id,
+              user_id: split.userId,
+              amount_owed: split.amountOwed,
+              is_settled: false,
+            })
+          )
+        );
+
+        if (createdSplits.some((split) => split === null)) {
+          throw new Error("Failed to create expense split entries.");
+        }
+
+        return createdExpense;
+      } catch (splitError) {
+        await api.deleteExpense(createdExpense.id);
+        throw splitError;
+      }
+    },
+    []
+  );
 
   const loadExpenses = useCallback(async () => {
     setLoading(true);
@@ -32,7 +135,63 @@ export default function ExpensesPage() {
 
       setCurrentGroupId(group.id);
 
-      const data = await api.fetchExpenses(group.id);
+      const [data, allGroupMembers, allUsers, allExpenseSplits] = await Promise.all([
+        api.fetchExpenses(group.id),
+        api.fetchGroupMembers(),
+        api.fetchUsers(),
+        api.fetchExpenseSplits(),
+      ]);
+
+      const allMembersInGroup = allGroupMembers.filter(
+        (member) => member.group_id === group.id
+      );
+      const membersInGroup = allMembersInGroup.filter(
+        (member) => member.user_id !== CURRENT_USER_ID
+      );
+      const userById = new Map(allUsers.map((user) => [user.id, user]));
+      const expenseIdSet = new Set(data.map((expense) => expense.id));
+      const splitMap: Record<number, string[]> = {};
+      const splitRowsMap: Record<number, api.ExpenseSplitBackend[]> = {};
+
+      for (const split of allExpenseSplits) {
+        if (!expenseIdSet.has(split.expense_id)) {
+          continue;
+        }
+
+        if (!splitRowsMap[split.expense_id]) {
+          splitRowsMap[split.expense_id] = [];
+        }
+        splitRowsMap[split.expense_id].push(split);
+
+        if (!splitMap[split.expense_id]) {
+          splitMap[split.expense_id] = [];
+        }
+
+        const label = userById.get(split.user_id)?.full_name ?? `User #${split.user_id}`;
+        splitMap[split.expense_id].push(label);
+      }
+
+      for (const expenseId of Object.keys(splitMap)) {
+        splitMap[Number(expenseId)] = [...new Set(splitMap[Number(expenseId)])].sort((a, b) =>
+          a.localeCompare(b)
+        );
+      }
+
+      setGroupMemberUserIds(membersInGroup.map((member) => member.user_id));
+      setGroupMemberOptions(
+        allMembersInGroup.map((member) => ({
+          userId: member.user_id,
+          label: userById.get(member.user_id)?.full_name ?? `User #${member.user_id}`,
+        }))
+      );
+      setManualSplitMembers(
+        membersInGroup.map((member) => ({
+          userId: member.user_id,
+          label: userById.get(member.user_id)?.full_name ?? `User #${member.user_id}`,
+        }))
+      );
+      setSplitMembersByExpense(splitMap);
+      setSplitRowsByExpense(splitRowsMap);
       setExpenses(data);
     } catch (err) {
       setError("Failed to load expenses. Please try again.");
@@ -50,7 +209,8 @@ export default function ExpensesPage() {
     name: string;
     amount: number;
     category: string;
-    splitMethod: string;
+    splitType: "equal" | "custom";
+    splits: SplitInput[];
   }) => {
     if (!currentGroupId) {
       setError("Group is not loaded yet.");
@@ -63,15 +223,15 @@ export default function ExpensesPage() {
         paid_by: CURRENT_USER_ID,
         title: expense.name,
         total_amount: expense.amount,
-        split_type: "equal",
+        split_type: expense.splitType,
         receipt_id: null,
         category: expense.category,
       };
 
-      const created = await api.createExpense(payload);
+      const created = await createExpenseWithSplits(payload, expense.splits);
 
       if (created) {
-        setExpenses((prev) => [created, ...prev]);
+        await loadExpenses();
         setError("");
       } else {
         setError("Failed to create expense. Please try again.");
@@ -82,7 +242,7 @@ export default function ExpensesPage() {
     }
   };
 
-  const handleScan = async (receipt: ScannedReceipt, receiptId: number) => {
+  const handleScan = useCallback(async (receipt: ScannedReceipt, receiptId: number) => {
     if (!currentGroupId) {
       setError("Group is not loaded yet.");
       return;
@@ -96,13 +256,15 @@ export default function ExpensesPage() {
         total_amount: receipt.totalAmount,
         split_type: "equal",
         receipt_id: receiptId,
-        category: receipt.category || "Shopping",
+        category: normalizeExpenseCategory(receipt.category),
       };
 
-      const created = await api.createExpense(payload);
+      const splits = splitCentsEvenly(receipt.totalAmount, groupMemberUserIds);
+
+      const created = await createExpenseWithSplits(payload, splits);
 
       if (created) {
-        setExpenses((prev) => [created, ...prev]);
+        await loadExpenses();
         setError("");
       } else {
         setError("Failed to create expense from receipt. Please try again.");
@@ -111,7 +273,7 @@ export default function ExpensesPage() {
       setError("Error creating expense from receipt");
       console.error(err);
     }
-  };
+  }, [createExpenseWithSplits, currentGroupId, groupMemberUserIds]);
 
   return (
     <>
@@ -139,13 +301,19 @@ export default function ExpensesPage() {
               groupId={currentGroupId ?? 0}
               userId={CURRENT_USER_ID}
             />
-            <ManualEntryForm onAdd={handleManualAdd} />
+            <ManualEntryForm onAdd={handleManualAdd} members={manualSplitMembers} />
           </div>
 
           {loading ? (
             <div className="text-center py-12 text-outline">Loading expenses...</div>
           ) : (
-            <ExpenseTable expenses={expenses} onRefresh={loadExpenses} />
+            <ExpenseTable
+              expenses={expenses}
+              splitMembersByExpense={splitMembersByExpense}
+              splitRowsByExpense={splitRowsByExpense}
+              groupMemberOptions={groupMemberOptions}
+              onRefresh={loadExpenses}
+            />
           )}
     </>
   );
