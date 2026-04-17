@@ -1,28 +1,82 @@
 "use client";
 
 import Image from "next/image";
-import { useRouter } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CiLogout } from "react-icons/ci";
 import { MdStar } from "react-icons/md";
-import { useState, useEffect } from "react";
-// import * as api from "../lib/apiClient"; // Placeholder for API integration
+import { useState, useEffect, useCallback } from "react";
+import { logout } from "@/lib/authClient";
+import {
+  POINTS_UPDATED_EVENT,
+  resolveActiveMembership,
+} from "@/lib/activeMembership";
 
 export default function TopBar() {
   const router = useRouter();
-  const [points, setPoints] = useState<number>(1240); // Placeholder for group_members points
+  const pathname = usePathname();
+  const [points, setPoints] = useState<number>(0);
 
-  useEffect(() => {
-    // TODO: Fetch user points from group_members when available in the backend
-    // async function loadPoints() {
-    //   const data = await api.fetchCurrentUserPoints();
-    //   setPoints(data.points);
-    // }
-    // loadPoints();
+  const loadPoints = useCallback(async () => {
+    try {
+      const context = await resolveActiveMembership();
+      setPoints(Number(context.activeMembership.points ?? 0));
+    } catch (error) {
+      console.error("Failed to load points:", error);
+      setPoints(0);
+    }
   }, []);
 
-  const handleLogout = () => {
-    console.log("Logging out...");
-    router.push("/login");
+  useEffect(() => {
+    let mounted = true;
+
+    async function guardedLoadPoints() {
+      if (!mounted) {
+        return;
+      }
+
+      await loadPoints();
+    }
+
+    const handlePointsUpdated = (event: Event) => {
+      if (!mounted) {
+        return;
+      }
+
+      const customEvent = event as CustomEvent<{ points?: number }>;
+      if (typeof customEvent.detail?.points === "number") {
+        setPoints(customEvent.detail.points);
+        return;
+      }
+
+      void guardedLoadPoints();
+    };
+
+    const handleFocus = () => {
+      void guardedLoadPoints();
+    };
+
+    void guardedLoadPoints();
+
+    window.addEventListener(POINTS_UPDATED_EVENT, handlePointsUpdated as EventListener);
+    window.addEventListener("focus", handleFocus);
+
+    return () => {
+      mounted = false;
+      window.removeEventListener(
+        POINTS_UPDATED_EVENT,
+        handlePointsUpdated as EventListener
+      );
+      window.removeEventListener("focus", handleFocus);
+    };
+  }, [loadPoints, pathname]);
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      router.replace("/login");
+      router.refresh();
+    }
   };
 
   return (

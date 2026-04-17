@@ -1,8 +1,9 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import { CiLogout } from "react-icons/ci";
+import { logout } from "@/lib/authClient";
 
 const navItems = [
   { href: "/", label: "Dashboard", icon: "dashboard" },
@@ -12,7 +13,17 @@ const navItems = [
 ];
 
 export default function SideNav() {
+  const router = useRouter();
   const pathname = usePathname();
+
+  const handleLogout = async () => {
+    try {
+      await logout();
+    } finally {
+      router.replace("/login");
+      router.refresh();
+    }
+  };
 
   return (
     <aside className="hidden md:flex flex-col h-full w-64 fixed left-0 top-0 py-8 gap-4 bg-[#f6fafb] z-50">
@@ -46,14 +57,15 @@ export default function SideNav() {
       </nav>
 
       <div className="px-4 mt-auto pb-2">
-        <Link
-          href="/login"
+        <button
+          type="button"
+          onClick={handleLogout}
           className="w-full py-3 border border-outline-variant text-outline rounded-full font-bold text-sm flex items-center justify-center gap-2 hover:bg-surface-container hover:text-on-surface transition-all"
         >
 
           <CiLogout className="text-lg" />
           Log Out
-        </Link>
+        </button>
       </div>
     </aside>
   );
