@@ -8,12 +8,14 @@ interface ChoreColumnProps {
   chores: Chore[];
   accentColor?: string;
   onComplete?: (id: string) => Promise<void>;
+  onSkip?: (id: string) => Promise<void>;
 }
 
 const ACCENT_COLORS: Record<string, string> = {
-  Daily:   "bg-primary",
-  Weekly:  "bg-secondary",
-  Monthly: "bg-tertiary",
+  Daily:    "bg-primary",
+  Weekly:   "bg-secondary",
+  Monthly:  "bg-tertiary",
+  "One Time": "bg-outline",
 };
 
 export default function ChoreColumn({
@@ -21,9 +23,10 @@ export default function ChoreColumn({
   taskCount,
   chores,
   onComplete,
+  onSkip,
 }: ChoreColumnProps) {
   const dot = ACCENT_COLORS[title] ?? "bg-outline";
-{/* Adding Comments for Clarity */}
+  {/* Adding Comments for Clarity */}
   return (
     <div className="flex flex-col gap-4 flex-1 min-w-0">
       {/* Column header */}
@@ -36,7 +39,7 @@ export default function ChoreColumn({
       {/* Chore cards */}
       <div className="flex flex-col gap-3">
         {chores.map((chore) => (
-          <ChoreCard key={chore.id} chore={chore} onComplete={onComplete} />
+          <ChoreCard key={chore.id} chore={chore} onComplete={onComplete} onSkip={onSkip} />
         ))}
       </div>
     </div>

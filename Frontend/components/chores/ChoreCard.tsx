@@ -10,20 +10,23 @@ export interface Chore {
   daysLeft?: number;
   assignee: string;
   assigneeAvatar?: string;
-  status: "pending" | "inprogress" | "complete";
+  status: "pending" | "inprogress" | "complete" | "skipped";
 }
 
 interface ChoreCardProps {
   chore: Chore;
   onComplete?: (id: string) => Promise<void>;
+  onSkip?: (id: string) => Promise<void>;
 }
 
-export default function ChoreCard({ chore, onComplete }: ChoreCardProps) {
+export default function ChoreCard({ chore, onComplete, onSkip }: ChoreCardProps) {
   const [completing, setCompleting] = useState(false);
+  const [skipping, setSkipping] = useState(false);
   const [done, setDone] = useState(chore.status === "complete");
+  const [skipped, setSkipped] = useState(chore.status === "skipped");
 
   const handleComplete = async () => {
-    if (done) return;
+    if (done || skipped) return;
     setCompleting(true);
     try {
       await onComplete?.(chore.id);
@@ -32,19 +35,32 @@ export default function ChoreCard({ chore, onComplete }: ChoreCardProps) {
       setCompleting(false);
     }
   };
-  {/* Adding Comments for Clarity */}
+
+  const handleSkip = async () => {
+    if (done || skipped) return;
+    setSkipping(true);
+    try {
+      await onSkip?.(chore.id);
+      setSkipped(true);
+    } finally {
+      setSkipping(false);
+    }
+  };
+
   return (
     <div
-      className={`bg-white rounded-2xl p-5 border transition-all ${
+      className={`bg-white rounded-2xl p-3 border transition-all ${
         done
           ? "border-primary/30 bg-primary/5"
-          : "border-outline-variant/40 hover:border-outline-variant"
+          : skipped
+            ? "border-outline-variant/30 bg-surface-container-low/50"
+            : "border-outline-variant/40 hover:border-outline-variant"
       }`}
     >
       {/* Top row: points badge + due label */}
-      <div className="flex items-center justify-between mb-4">
+      <div className="flex items-center justify-between mb-2">
         <span
-          className={`text-[10px] font-bold px-3 py-1.5 rounded-full ${
+          className={`text-[10px] font-bold px-2 py-1 rounded-full leading-tight ${
             chore.status === "inprogress"
               ? "bg-secondary text-white"
               : "bg-primary/10 text-primary"
@@ -65,18 +81,22 @@ export default function ChoreCard({ chore, onComplete }: ChoreCardProps) {
 
       {/* Chore title */}
       <h3
-        className={`text-lg font-bold font-headline mb-5 ${
-          done ? "line-through text-outline" : "text-on-surface"
+        className={`text-sm font-bold font-headline mb-3 ${
+          done
+            ? "line-through text-outline"
+            : skipped
+              ? "line-through text-outline/50"
+              : "text-on-surface"
         }`}
       >
         {chore.title}
       </h3>
 
-      {/* Bottom row: assignee + complete button */}
-      <div className="flex items-center justify-between">
+      {/* Bottom row: assignee + skip + complete buttons */}
+      <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
           {/* Avatar */}
-          <div className="w-8 h-8 rounded-full bg-primary-container flex items-center justify-center text-xs font-bold text-on-primary-container">
+          <div className="w-7 h-7 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">
             {chore.assignee.slice(0, 2).toUpperCase()}
           </div>
           {chore.status === "inprogress" && (
@@ -86,22 +106,36 @@ export default function ChoreCard({ chore, onComplete }: ChoreCardProps) {
           )}
         </div>
 
-        {/* Complete button / spinner */}
+        {/* Action buttons */}
         {done ? (
           <div className="flex items-center gap-2 text-primary font-bold text-sm">
             <span className="material-symbols-outlined text-base">check_circle</span>
             Done
           </div>
-        ) : completing ? (
+        ) : skipped ? (
+          <div className="flex items-center gap-2 text-outline font-bold text-sm">
+            <span className="material-symbols-outlined text-base">block</span>
+            Skipped
+          </div>
+        ) : completing || skipping ? (
           <div className="w-10 h-10 rounded-full border-4 border-secondary/30 border-t-secondary animate-spin" />
         ) : (
-          <button
-            onClick={handleComplete}
-            className="flex items-center gap-2 bg-surface-container-low text-on-surface px-4 py-2 rounded-full text-sm font-bold hover:bg-primary hover:text-white transition-all"
-          >
-            <span className="material-symbols-outlined text-base">check_circle</span>
-            Complete
-          </button>
+          <div className="flex flex-col gap-1.5 items-end">
+            <button
+              onClick={handleSkip}
+              className="flex items-center gap-1 bg-surface-container-low text-outline px-2.5 py-1.5 rounded-full text-xs font-bold hover:bg-outline/10 transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">block</span>
+              Skip
+            </button>
+            <button
+              onClick={handleComplete}
+              className="flex items-center gap-1 bg-surface-container-low text-on-surface px-2.5 py-1.5 rounded-full text-xs font-bold hover:bg-primary hover:text-white transition-all"
+            >
+              <span className="material-symbols-outlined text-sm">check_circle</span>
+              Complete
+            </button>
+          </div>
         )}
       </div>
     </div>
