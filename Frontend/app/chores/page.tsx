@@ -112,6 +112,18 @@ export default function ChoresPage() {
   } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
+  // Refs so the unmount cleanup always has fresh values without stale closures
+  const pendingActionRef = useRef<{
+    assignmentId: number;
+    choreId: string;
+    action: "complete" | "skip";
+    pointsAwarded: number;
+    assignedUserId: number;
+    previousAssignments: api.ChoreAssignmentBackend[];
+    previousChores: Chore[];
+  } | null>(null);
+  const groupMembersRef = useRef<api.GroupMemberBackend[]>([]);
+
   const [nextChoreTitle, setNextChoreTitle] = useState("No chores assigned");
   const [nextChoreDueText, setNextChoreDueText] = useState("You're all caught up.");
   const [nextChoreAssignee, setNextChoreAssignee] = useState("");
@@ -199,9 +211,10 @@ export default function ChoresPage() {
 
       // Narrow to assignments for the current user within this group
       // (reuse the sets already built above for the due-date map).
+      // Consider all group members' assignments for the next chore alert
+      // so overdue chores from any roommate surface in the correct order.
       const userAssignments = allAssignments
         .filter((assignment) => groupUserIdSet.has(assignment.assigned_to))
-        .filter((assignment) => assignment.assigned_to === CURRENT_USER_ID)
         .filter((assignment) => groupChoreIdSet.has(Number(assignment.chore_id)))
         .filter((assignment) =>
           assignment.status.toLowerCase() !== "completed" &&
@@ -258,37 +271,83 @@ export default function ChoresPage() {
     loadChoresAndAssignments();
   }, []);
 
-  const dismissUndoToast = () => {
-    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
-    setUndoToast(null);
+  // Keep groupMembersRef current so the unmount cleanup can read fresh data
+  useEffect(() => {
+    groupMembersRef.current = groupMembers;
+  }, [groupMembers]);
+
+  // On unmount: cancel timer and commit any pending action to the backend
+  // so navigating away always leaves the backend in a consistent state.
+  useEffect(() => {
+    return () => {
+      if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+      const action = pendingActionRef.current;
+      if (action) {
+        const status = action.action === "complete" ? "completed" : "skipped";
+        api.updateChoreAssignment(action.assignmentId, status);
+        if (action.action === "complete" && action.pointsAwarded > 0) {
+          const member = groupMembersRef.current.find(
+            (m) => m.user_id === action.assignedUserId
+          );
+          if (member) {
+            api.updateGroupMember(member.id, {
+              points: member.points + action.pointsAwarded,
+            });
+          }
+        }
+        pendingActionRef.current = null;
+      }
+    };
+  }, []);
+
+  // Commit the pending action to the backend (called when timer expires)
+  const commitPendingAction = async () => {
+    const action = pendingActionRef.current;
+    if (!action) return;
+    pendingActionRef.current = null;
+
+    const status = action.action === "complete" ? "completed" : "skipped";
+    await api.updateChoreAssignment(action.assignmentId, status);
+
+    if (action.action === "complete" && action.pointsAwarded > 0) {
+      const member = groupMembers.find((m) => m.user_id === action.assignedUserId);
+      if (member) {
+        const updatedMember = await api.updateGroupMember(member.id, {
+          points: member.points + action.pointsAwarded,
+        });
+        if (updatedMember && member.user_id === CURRENT_USER_ID) {
+          setCurrentMember(updatedMember);
+        }
+      }
+    }
   };
 
-  const scheduleReload = () => {
+  const scheduleCommit = () => {
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
     undoTimerRef.current = setTimeout(async () => {
       setUndoToast(null);
+      await commitPendingAction();
       await loadChoresAndAssignments();
     }, 10000);
   };
 
-  const handleUndo = async () => {
-    if (!undoToast) return;
-    dismissUndoToast();
-    try {
-      await api.updateChoreAssignment(undoToast.assignmentId, "pending");
-      // Reverse points if the action was a completion
-      if (undoToast.action === "complete" && currentMember) {
-        const revertedPoints = (currentMember.points ?? 0) - undoToast.pointsAwarded;
-        const updatedMember = await api.updateGroupMember(currentMember.id, {
-          points: Math.max(0, revertedPoints),
-        });
-        if (updatedMember) setCurrentMember(updatedMember);
-      }
-      await loadChoresAndAssignments();
-    } catch (err) {
-      setError("Failed to undo. Please try again.");
-      console.error(err);
-    }
+  // Undo: cancel timer and revert local state — no backend calls needed
+  // since we haven't written anything yet (deferred write).
+  const handleUndo = () => {
+    if (!undoToast || !pendingActionRef.current) return;
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    const { previousAssignments, previousChores } = pendingActionRef.current;
+    setAssignments(previousAssignments);
+    setAllChores(previousChores);
+    pendingActionRef.current = null;
+    setUndoToast(null);
+  };
+
+  const dismissUndoToast = async () => {
+    if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
+    await commitPendingAction();
+    setUndoToast(null);
+    await loadChoresAndAssignments();
   };
 
   const handleChoreComplete = async (choreId: string) => {
@@ -303,41 +362,39 @@ export default function ChoresPage() {
       return;
     }
 
-    try {
-      const updated = await api.updateChoreAssignment(assignment.id, "completed");
+    const completedChore = allChores.find((c) => c.id === choreId);
+    const pointsAwarded = completedChore?.points ?? 0;
 
-      if (updated) {
-        setAssignments(assignments.map((a) => (a.id === assignment.id ? updated : a)));
-        setAllChores(allChores.map((chore) =>
-          chore.id === choreId ? { ...chore, status: "complete" } : chore
-        ));
+    // Store action in ref for deferred backend write and unmount commit
+    pendingActionRef.current = {
+      assignmentId: assignment.id,
+      choreId,
+      action: "complete",
+      pointsAwarded,
+      assignedUserId: assignment.assigned_to,
+      previousAssignments: assignments,
+      previousChores: allChores,
+    };
 
-        // Award points
-        const completedChore = allChores.find((c) => c.id === choreId);
-        let pointsAwarded = 0;
-        if (completedChore && currentMember) {
-          pointsAwarded = completedChore.points;
-          const newPoints = (currentMember.points ?? 0) + pointsAwarded;
-          const updatedMember = await api.updateGroupMember(currentMember.id, { points: newPoints });
-          if (updatedMember) setCurrentMember(updatedMember);
-        }
+    // Optimistic UI update — backend is NOT written yet
+    const optimisticAssignment = {
+      ...assignment,
+      status: "completed",
+      completed_at: new Date().toISOString(),
+    };
+    setAssignments(assignments.map((a) => (a.id === assignment.id ? optimisticAssignment : a)));
+    setAllChores(allChores.map((chore) =>
+      chore.id === choreId ? { ...chore, status: "complete" } : chore
+    ));
 
-        // Show undo toast and schedule reload after 4 seconds
-        setUndoToast({
-          assignmentId: assignment.id,
-          choreId,
-          choreTitle: completedChore?.title ?? "Chore",
-          action: "complete",
-          pointsAwarded,
-        });
-        scheduleReload();
-      } else {
-        setError("Failed to mark chore as complete. Please try again.");
-      }
-    } catch (err) {
-      setError("Error completing chore.");
-      console.error(err);
-    }
+    setUndoToast({
+      assignmentId: assignment.id,
+      choreId,
+      choreTitle: completedChore?.title ?? "Chore",
+      action: "complete",
+      pointsAwarded,
+    });
+    scheduleCommit();
   };
 
   const handleChoreSkip = async (choreId: string) => {
@@ -353,32 +410,34 @@ export default function ChoresPage() {
       return;
     }
 
-    try {
-      const updated = await api.updateChoreAssignment(assignment.id, "skipped");
+    const skippedChore = allChores.find((c) => c.id === choreId);
 
-      if (updated) {
-        setAssignments(assignments.map((a) => (a.id === assignment.id ? updated : a)));
-        const skippedChore = allChores.find((c) => c.id === choreId);
-        setAllChores(allChores.map((chore) =>
-          chore.id === choreId ? { ...chore, status: "skipped" } : chore
-        ));
+    // Store action for deferred write and unmount commit
+    pendingActionRef.current = {
+      assignmentId: assignment.id,
+      choreId,
+      action: "skip",
+      pointsAwarded: 0,
+      assignedUserId: assignment.assigned_to,
+      previousAssignments: assignments,
+      previousChores: allChores,
+    };
 
-        // Show undo toast and schedule reload after 4 seconds
-        setUndoToast({
-          assignmentId: assignment.id,
-          choreId,
-          choreTitle: skippedChore?.title ?? "Chore",
-          action: "skip",
-          pointsAwarded: 0,
-        });
-        scheduleReload();
-      } else {
-        setError("Failed to skip chore. Please try again.");
-      }
-    } catch (err) {
-      setError("Error skipping chore.");
-      console.error(err);
-    }
+    // Optimistic UI update — backend is NOT written yet
+    const optimisticAssignment = { ...assignment, status: "skipped" };
+    setAssignments(assignments.map((a) => (a.id === assignment.id ? optimisticAssignment : a)));
+    setAllChores(allChores.map((chore) =>
+      chore.id === choreId ? { ...chore, status: "skipped" } : chore
+    ));
+
+    setUndoToast({
+      assignmentId: assignment.id,
+      choreId,
+      choreTitle: skippedChore?.title ?? "Chore",
+      action: "skip",
+      pointsAwarded: 0,
+    });
+    scheduleCommit();
   };
 
   const dailyChores = allChores.filter((c) => c.dueLabel === "Due Today");
