@@ -52,6 +52,21 @@ export interface ExpenseCreatePayload {
   category?: string | null;
 }
 
+export interface ExpenseSplitBackend {
+  id: number;
+  expense_id: number;
+  user_id: number;
+  amount_owed: number;
+  is_settled: boolean;
+}
+
+export interface ExpenseSplitCreatePayload {
+  expense_id: number;
+  user_id: number;
+  amount_owed: number;
+  is_settled: boolean;
+}
+
 export interface ChoreBackend {
   id: number;
   group_id: number;
@@ -251,6 +266,87 @@ export async function deleteExpense(id: number): Promise<boolean> {
     return true;
   } catch (err) {
     console.error("Error deleting expense:", err);
+    return false;
+  }
+}
+
+export async function fetchExpenseSplits(): Promise<ExpenseSplitBackend[]> {
+  const res = await fetch(`/api/expense-splits`, {
+    method: "GET",
+    headers: { "Content-Type": "application/json" },
+  });
+
+  if (!res.ok) {
+    throw new Error(
+      `Fetch expense splits failed: ${res.status} ${res.statusText}`
+    );
+  }
+
+  return await res.json();
+}
+
+export async function createExpenseSplit(
+  payload: ExpenseSplitCreatePayload
+): Promise<ExpenseSplitBackend | null> {
+  try {
+    const res = await fetch(`/api/expense-splits`, {
+      method: "POST",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Create expense split failed: ${res.status} ${res.statusText}`
+      );
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error creating expense split:", err);
+    return null;
+  }
+}
+
+export async function updateExpenseSplit(
+  id: number,
+  payload: Partial<ExpenseSplitCreatePayload>
+): Promise<ExpenseSplitBackend | null> {
+  try {
+    const res = await fetch(`/api/expense-splits/${id}`, {
+      method: "PUT",
+      headers: { "Content-Type": "application/json" },
+      body: JSON.stringify(payload),
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Update expense split failed: ${res.status} ${res.statusText}`
+      );
+    }
+
+    return await res.json();
+  } catch (err) {
+    console.error("Error updating expense split:", err);
+    return null;
+  }
+}
+
+export async function deleteExpenseSplit(id: number): Promise<boolean> {
+  try {
+    const res = await fetch(`/api/expense-splits/${id}`, {
+      method: "DELETE",
+    });
+
+    if (!res.ok) {
+      throw new Error(
+        `Delete expense split failed: ${res.status} ${res.statusText}`
+      );
+    }
+
+    return true;
+  } catch (err) {
+    console.error("Error deleting expense split:", err);
     return false;
   }
 }
