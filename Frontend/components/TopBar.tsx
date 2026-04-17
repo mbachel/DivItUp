@@ -21,7 +21,6 @@ export default function TopBar() {
   }, []);
 
   const handleLogout = () => {
-    // Perform actual logout logic here (e.g., clear tokens, session, etc.)
     console.log("Logging out...");
     router.push("/login");
   };

@@ -13,7 +13,7 @@ interface ChoresCardProps {
   chores: ChoreEntry[];
   onCompleteTask?: () => void;
 }
-{/*Adding comments for clarity*/}
+// chore timeline emphasizes the next assignee and priority status
 export default function ChoresCard({ chores, onCompleteTask }: ChoresCardProps) {
   return (
     <div className="md:col-span-5 lg:col-span-4 bg-primary-container text-on-primary-container rounded-xl p-8 ambient-depth flex flex-col">
@@ -32,7 +32,7 @@ export default function ChoresCard({ chores, onCompleteTask }: ChoresCardProps) 
               index === 0 ? "border-white/20" : "border-white/10"
             }`}
           >
-            {/* Priority indicator dot */}
+            {/* priority marker shown for urgent chores */}
             {chore.isPriority && (
               <div className="absolute -left-3 top-0 w-6 h-6 bg-secondary-fixed text-on-secondary-fixed rounded-full flex items-center justify-center">
                 <span className="material-symbols-outlined text-xs">
