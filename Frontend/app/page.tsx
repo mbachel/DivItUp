@@ -3,7 +3,7 @@
 import { useEffect, useMemo, useState } from "react";
 import LockedAlert from "@/components/LockedAlert";
 import FinancialOverview from "@/components/FinancialOverview";
-import ChoresCard from "@/components/ChoresCard";
+import WhoIsNext from "@/components/WhoIsNext";
 import ActivityFeed from "@/components/ActivityFeed";
 import {
   fetchChores,
@@ -21,14 +21,13 @@ type DashboardChoreEntry = {
   timeLabel: string;
   choreName: string;
   assignee: string;
-  assigneeAvatar: string;
   isCurrentUser: boolean;
   isPriority?: boolean;
 };
 
 export default function DashboardPage() {
   const [isRestricted, setIsRestricted] = useState(false);
-  const [todayChores, setTodayChores] = useState<DashboardChoreEntry[]>([]);
+  const [upcomingChores, setUpcomingChores] = useState<DashboardChoreEntry[]>([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -52,43 +51,60 @@ export default function DashboardPage() {
         setIsRestricted(Boolean(currentGroupMember?.is_restricted));
 
         const groupChoreIds = new Set(chores.map((chore) => chore.id));
-        const today = new Date().toISOString().slice(0, 10);
 
-        const dueTodayAssignments = assignments.filter((assignment) => {
-          const dueDate = assignment.due_date.slice(0, 10);
-          return (
-            groupChoreIds.has(assignment.chore_id) &&
-            dueDate === today &&
-            assignment.status !== "completed"
-          );
-        });
+        // next upcoming pending chores for the group, sorted by due date
+        const upcomingAssignments = assignments
+          .filter(
+            (assignment) =>
+              groupChoreIds.has(assignment.chore_id) &&
+              assignment.status === "pending"
+          )
+          .sort(
+            (a, b) =>
+              new Date(a.due_date).getTime() - new Date(b.due_date).getTime()
+          )
+          .slice(0, 4);
 
-        const mappedTodayChores: DashboardChoreEntry[] = dueTodayAssignments.map(
+        const mapped: DashboardChoreEntry[] = upcomingAssignments.map(
           (assignment, index) => {
             const matchingChore = chores.find(
-              (chore) => chore.id === assignment.chore_id
+              (c) => c.id === assignment.chore_id
+            );
+            const matchingUser = users.find(
+              (u) => u.id === assignment.assigned_to
             );
 
-            const matchingUser = users.find(
-              (user) => user.id === assignment.assigned_to
+            const due = new Date(assignment.due_date);
+            const today = new Date();
+            const diff = Math.ceil(
+              (due.setHours(0, 0, 0, 0) - today.setHours(0, 0, 0, 0)) /
+                86400000
             );
+
+            const timeLabel =
+              diff === 0
+                ? "TODAY"
+                : diff === 1
+                  ? "TOMORROW"
+                  : diff < 0
+                    ? `OVERDUE BY ${Math.abs(diff)} DAYS`
+                    : `IN ${diff} DAYS`;
 
             return {
-              timeLabel: "Due Today",
+              timeLabel,
               choreName: matchingChore?.title ?? "Unnamed Chore",
               assignee: matchingUser?.full_name ?? "Unknown User",
-              assigneeAvatar: "/Mogistan.jpg",
               isCurrentUser: assignment.assigned_to === CURRENT_USER_ID,
               isPriority: index === 0,
             };
           }
         );
 
-        setTodayChores(mappedTodayChores);
+        setUpcomingChores(mapped);
       } catch (error) {
         console.error("Failed to load dashboard data:", error);
         setIsRestricted(false);
-        setTodayChores([]);
+        setUpcomingChores([]);
       } finally {
         setLoading(false);
       }
@@ -98,21 +114,20 @@ export default function DashboardPage() {
   }, []);
 
   const choresToDisplay = useMemo(() => {
-    if (todayChores.length > 0) {
-      return todayChores;
+    if (upcomingChores.length > 0) {
+      return upcomingChores;
     }
 
     return [
       {
-        timeLabel: "No chores due today",
-        choreName: "Nothing is due today",
-        assignee: "All caught up",
-        assigneeAvatar: "/Mogistan.jpg",
+        timeLabel: "ALL DONE",
+        choreName: "No upcoming chores",
+        assignee: "All caught up!",
         isCurrentUser: false,
-        isPriority: true,
+        isPriority: false,
       },
     ];
-  }, [todayChores]);
+  }, [upcomingChores]);
 
   return (
     <>
@@ -126,10 +141,7 @@ export default function DashboardPage() {
       <div className="grid grid-cols-1 md:grid-cols-12 gap-6">
         <FinancialOverview totalDebt={452.2} entries={balanceEntries} />
 
-        <ChoresCard
-          chores={loading ? [] : choresToDisplay}
-          onCompleteTask={() => console.log("Complete task")}
-        />
+        <WhoIsNext chores={loading ? [] : choresToDisplay} />
 
         <ActivityFeed
           activities={recentActivities}
