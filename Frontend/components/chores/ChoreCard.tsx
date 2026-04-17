@@ -57,7 +57,7 @@ export default function ChoreCard({ chore, onComplete, onSkip }: ChoreCardProps)
             : "border-outline-variant/40 hover:border-outline-variant"
       }`}
     >
-      {/* Top row: points badge + due label */}
+      {/* points badge on the left, due date info on the right */}
       <div className="flex items-center justify-between mb-2">
         <span
           className={`text-[10px] font-bold px-2 py-1 rounded-full leading-tight ${
@@ -79,7 +79,7 @@ export default function ChoreCard({ chore, onComplete, onSkip }: ChoreCardProps)
         </span>
       </div>
 
-      {/* Chore title */}
+      {/* chore name, struck through if it's done or skipped */}
       <h3
         className={`text-sm font-bold font-headline mb-3 ${
           done
@@ -92,10 +92,10 @@ export default function ChoreCard({ chore, onComplete, onSkip }: ChoreCardProps)
         {chore.title}
       </h3>
 
-      {/* Bottom row: assignee + skip + complete buttons */}
+      {/* assignee avatar on the left, action buttons on the right */}
       <div className="flex items-start justify-between">
         <div className="flex items-center gap-2">
-          {/* Avatar */}
+          {/* initials-based avatar since we don't have profile pictures yet */}
           <div className="w-7 h-7 rounded-full bg-primary-container flex items-center justify-center text-[10px] font-bold text-on-primary-container">
             {chore.assignee.slice(0, 2).toUpperCase()}
           </div>
@@ -106,7 +106,7 @@ export default function ChoreCard({ chore, onComplete, onSkip }: ChoreCardProps)
           )}
         </div>
 
-        {/* Action buttons */}
+        {/* render the right state: done, skipped, loading, or the two action buttons */}
         {done ? (
           <div className="flex items-center gap-2 text-primary font-bold text-sm">
             <span className="material-symbols-outlined text-base">check_circle</span>

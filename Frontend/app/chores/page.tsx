@@ -11,14 +11,14 @@ const CURRENT_GROUP_INVITE_CODE = "MAPLE26MOD";
 const CURRENT_USER_ID = 1002;
 
 /**
- * Returns how many whole days remain until `dueDate`.
- * Negative values mean the chore is overdue.
- * 0 means due today (less than 24 h away).
+ * returns how many whole days remain until `dueDate`
+ * negative values mean the chore is overdue
+ * 0 means due today (less than 24 h away)
  */
 function computeDaysLeft(dueDate: string): number {
   const msPerDay = 1000 * 60 * 60 * 24;
   const diffMs = new Date(dueDate).getTime() - Date.now();
-  // ceil so that "23 h 59 m left" shows as 1 day, not 0
+  // ceil keeps "23h 59m left" from rounding down to 0 days
   return Math.ceil(diffMs / msPerDay);
 }
 
@@ -53,9 +53,8 @@ function mapBackendChoreToUI(
         : assignmentStatus === "skipped"
           ? "skipped"
           : "pending",
-    // Use the real due date from the assignment when available; fall
-    // back to undefined so ChoreCard omits the label rather than
-    // showing a stale/fake number.
+    // use the real due date when we have one — fall back to undefined
+    // so the card skips the label rather than showing something made up
     daysLeft: dueDate !== undefined ? computeDaysLeft(dueDate) : undefined,
   };
 }
@@ -112,7 +111,7 @@ export default function ChoresPage() {
   } | null>(null);
   const undoTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
 
-  // Refs so the unmount cleanup always has fresh values without stale closures
+  // refs let the unmount cleanup read the latest values without getting caught by stale closures
   const pendingActionRef = useRef<{
     assignmentId: number;
     choreId: string;
@@ -148,9 +147,8 @@ export default function ChoresPage() {
         api.fetchUsers(),
       ]);
 
-      // Build a map of chore_id → earliest non-completed due date across
-      // all members of this group.  This drives the "X days left" label
-      // on each ChoreCard regardless of which specific user is assigned.
+      // build a lookup of each chore's earliest pending due date across all group members —
+      // this is what drives the "X days left" label on each card
       const groupChoreIdSet = new Set(chores.map((c) => Number(c.id)));
       const groupUserIdSet = new Set(
         groupMembers
@@ -179,8 +177,8 @@ export default function ChoresPage() {
         }
       }
 
-      // Map chore_id → assignment status for all group chores so every
-      // card reflects the real backend state regardless of who is assigned.
+      // track each chore's current status so every card reflects
+      // what's actually in the backend, not just the current user's view
       const choreUserStatusMap = new Map<number, string>();
       for (const assignment of allAssignments) {
         if (groupChoreIdSet.has(Number(assignment.chore_id))) {
@@ -188,7 +186,7 @@ export default function ChoresPage() {
         }
       }
 
-      // Show all chores in the group, not just the current user's
+      // include every chore in the group, not just the ones assigned to the current user
       const mapped = chores.map((chore) =>
         mapBackendChoreToUI(
           chore,
@@ -202,17 +200,17 @@ export default function ChoresPage() {
       setUsers(users);
       setCurrentGroupId(group.id);
 
-      // Store the current user's group member record so handleChoreComplete
-      // can read their current points total and award new ones.
+      // hang onto the current user's member record so we can read and update
+      // their points total when a chore is completed
       const member = groupMembers.find(
         (m) => m.group_id === group.id && m.user_id === CURRENT_USER_ID
       ) ?? null;
       setCurrentMember(member);
 
-      // Narrow to assignments for the current user within this group
-      // (reuse the sets already built above for the due-date map).
-      // Consider all group members' assignments for the next chore alert
-      // so overdue chores from any roommate surface in the correct order.
+      // filter down to active assignments for everyone in the group —
+      // reuses the id sets already built above
+      // we look at all roommates here so overdue chores from anyone
+      // show up in the right order in the next chore alert
       const userAssignments = allAssignments
         .filter((assignment) => groupUserIdSet.has(assignment.assigned_to))
         .filter((assignment) => groupChoreIdSet.has(Number(assignment.chore_id)))
@@ -271,13 +269,13 @@ export default function ChoresPage() {
     loadChoresAndAssignments();
   }, []);
 
-  // Keep groupMembersRef current so the unmount cleanup can read fresh data
+  // keep the ref in sync so the unmount cleanup always has the latest member list
   useEffect(() => {
     groupMembersRef.current = groupMembers;
   }, [groupMembers]);
 
-  // On unmount: cancel timer and commit any pending action to the backend
-  // so navigating away always leaves the backend in a consistent state.
+  // on unmount, cancel the undo timer and flush any pending action to the backend —
+  // this ensures navigating away doesn't leave things in a half-written state
   useEffect(() => {
     return () => {
       if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
@@ -300,7 +298,7 @@ export default function ChoresPage() {
     };
   }, []);
 
-  // Commit the pending action to the backend (called when timer expires)
+  // writes the deferred action to the backend — called once the undo window closes
   const commitPendingAction = async () => {
     const action = pendingActionRef.current;
     if (!action) return;
@@ -331,8 +329,8 @@ export default function ChoresPage() {
     }, 10000);
   };
 
-  // Undo: cancel timer and revert local state — no backend calls needed
-  // since we haven't written anything yet (deferred write).
+  // cancels the timer and snaps state back to before the action —
+  // since we haven't written to the backend yet, there's nothing to undo there
   const handleUndo = () => {
     if (!undoToast || !pendingActionRef.current) return;
     if (undoTimerRef.current) clearTimeout(undoTimerRef.current);
@@ -365,7 +363,7 @@ export default function ChoresPage() {
     const completedChore = allChores.find((c) => c.id === choreId);
     const pointsAwarded = completedChore?.points ?? 0;
 
-    // Store action in ref for deferred backend write and unmount commit
+    // stash the action details in a ref so the deferred write and unmount cleanup can both reach it
     pendingActionRef.current = {
       assignmentId: assignment.id,
       choreId,
@@ -376,7 +374,7 @@ export default function ChoresPage() {
       previousChores: allChores,
     };
 
-    // Optimistic UI update — backend is NOT written yet
+    // update the UI immediately — the backend write is still pending
     const optimisticAssignment = {
       ...assignment,
       status: "completed",
@@ -412,7 +410,7 @@ export default function ChoresPage() {
 
     const skippedChore = allChores.find((c) => c.id === choreId);
 
-    // Store action for deferred write and unmount commit
+    // same pattern as complete — stash in ref so both the timer and unmount can finalize it
     pendingActionRef.current = {
       assignmentId: assignment.id,
       choreId,
@@ -423,7 +421,7 @@ export default function ChoresPage() {
       previousChores: allChores,
     };
 
-    // Optimistic UI update — backend is NOT written yet
+    // update the UI immediately — the backend write is still pending
     const optimisticAssignment = { ...assignment, status: "skipped" };
     setAssignments(assignments.map((a) => (a.id === assignment.id ? optimisticAssignment : a)));
     setAllChores(allChores.map((chore) =>
@@ -525,7 +523,7 @@ export default function ChoresPage() {
           )}
         </div>
       </div>
-      {/* Undo toast */}
+      {/* floating toast that gives the user a chance to undo before the write goes through */}
       {undoToast && (
         <div className="fixed bottom-6 left-1/2 -translate-x-1/2 z-50 flex items-center gap-4 bg-on-surface text-surface px-5 py-3.5 rounded-2xl shadow-xl animate-fade-in">
           <span className="material-symbols-outlined text-base">

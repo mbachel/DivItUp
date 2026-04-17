@@ -28,7 +28,7 @@ export default function GroupGoalCard({
         </div>
       </div>
 
-      {/* Progress bar */}
+      {/* animated progress bar showing how many days the group has completed */}
       <div className="w-full bg-white/20 rounded-full h-3 mb-3 overflow-hidden">
         <div
           className="h-full bg-white rounded-full transition-all duration-500"
