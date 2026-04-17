@@ -43,7 +43,6 @@ export default function DashboardPage() {
           fetchUsers(),
         ]);
 
-        // Only show locked alert if this user's group_members row is restricted
         const currentGroupMember = groupMembers.find(
           (member) =>
             member.group_id === CURRENT_GROUP_ID &&
