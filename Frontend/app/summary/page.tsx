@@ -84,8 +84,14 @@ export default function SummaryPage() {
       );
 
       const groupUserIds = new Set(membersInGroup.map((member) => member.user_id));
+
       const roleByUserId = new Map(
         membersInGroup.map((member) => [member.user_id, member.role])
+      );
+
+      // Points live on group_members, not on users
+      const pointsByUserId = new Map(
+        membersInGroup.map((member) => [member.user_id, member.points])
       );
 
       const mappedLeaders: Leader[] = users
@@ -94,9 +100,13 @@ export default function SummaryPage() {
           id: String(user.id),
           name: user.full_name,
           subtitle: roleByUserId.get(user.id) === "admin" ? "Admin" : "Member",
-          points: Number(user.points ?? 0),
+          points: Number(pointsByUserId.get(user.id) ?? 0),
         }))
-        .sort((a, b) => b.points - a.points);
+        .sort((a, b) =>
+          b.points !== a.points
+            ? b.points - a.points
+            : a.name.localeCompare(b.name) // alphabetical tiebreaker
+        );
 
       setLeaders(mappedLeaders);
 
