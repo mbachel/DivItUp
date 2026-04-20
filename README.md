@@ -1,6 +1,8 @@
 # DivItUp
 
-> **Split bills. Not friendships.**
+> **Split Smarter.**
+> **Track Better.**
+> **Stress Less.**
 
 **[Live App → divitup.org](https://divitup.org)**
 
